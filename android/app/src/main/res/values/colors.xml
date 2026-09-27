@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- colors.xml — defines named color resources used by Android XML files -->
+<resources>
+    <!-- Deep Forest Green — Fluento primary background -->
+    <color name="fluento_bg">#0F3822</color>
+    <!-- Leaf Green — action/accent color -->
+    <color name="fluento_accent">#3E8E55</color>
+    <!-- Soft Warm Cream — text and card color -->
+    <color name="fluento_cream">#FDFBF7</color>
+</resources>

@@ -1,4 +1,4 @@
-package com.example.fluent
+package com.fluento.fluento
 
 import io.flutter.embedding.android.FlutterActivity
 
