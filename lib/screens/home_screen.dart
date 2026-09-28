@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'listening/listening_screen.dart';
+import 'reading/reading_screen.dart';
+import 'speaking/speaking_screen.dart';
+import 'writing/writing_screen.dart';
 
-// Keeping the palette in one place makes it easy to adjust the screen later.
 const Color _forestGreen = Color(0xFF0F3822);
 const Color _warmCream = Color(0xFFF7F3E9);
 const Color _leafGreen = Color(0xFF3E8E55);
@@ -9,22 +12,21 @@ const Color _charcoal = Color(0xFF1C2A23);
 const Color _softWhite = Color(0xFFFDFBF7);
 const double _dailyProgress = 0.65;
 const List<double> _weeklyActivity = [0.48, 0.72, 0.58, 0.9, 0.65, 0.82, 0.35];
-const List<String> _weekdays = [
-  'Mon',
-  'Tue',
-  'Wed',
-  'Thu',
-  'Fri',
-  'Sat',
-  'Sun'
-];
-const List<(String, IconData)> _drawerOptions = [
-  ('Reading', Icons.menu_book_rounded),
-  ('Writing', Icons.edit_note_rounded),
-  ('Speaking', Icons.mic_rounded),
-  ('Listening', Icons.headphones_rounded),
-  ('Profile', Icons.account_circle_outlined),
-  ('Settings', Icons.settings_outlined),
+const List<String> _weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+class _DrawerItem {
+  final String label;
+  final IconData icon;
+
+  const _DrawerItem(this.label, this.icon);
+}
+
+const List<_DrawerItem> _drawerOptions = [
+  _DrawerItem('Reading', Icons.menu_book_rounded),
+  _DrawerItem('Writing', Icons.edit_note_rounded),
+  _DrawerItem('Speaking', Icons.mic_rounded),
+  _DrawerItem('Listening', Icons.headphones_rounded),
+  _DrawerItem('Profile', Icons.account_circle_outlined),
+  _DrawerItem('Settings', Icons.settings_outlined),
 ];
 
 class HomeScreen extends StatelessWidget {
@@ -64,8 +66,6 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
-      // SingleChildScrollView lets the whole dashboard scroll as one page,
-      // especially on phones where the grid and banners extend below the fold.
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
         child: Column(
@@ -101,13 +101,11 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 14),
-            // GridView.count creates a predictable two-column layout. It is
-            // shrink-wrapped and non-scrollable so this page scrolls only once.
             GridView.count(
               crossAxisCount: 2,
               crossAxisSpacing: 14,
               mainAxisSpacing: 14,
-              childAspectRatio: 0.9,
+              childAspectRatio: 1.14,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               children: [
@@ -115,27 +113,37 @@ class HomeScreen extends StatelessWidget {
                   imagePath: 'assets/images/reading.jpg',
                   title: 'Reading',
                   lessonCount: '12 Lessons',
-                  onTap: () => _showNotice(context, 'Opening Reading lessons.'),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ReadingScreen()),
+                  ),
                 ),
                 ModuleCardImage(
                   imagePath: 'assets/images/writing.jpg',
                   title: 'Writing',
                   lessonCount: '8 Lessons',
-                  onTap: () => _showNotice(context, 'Opening Writing lessons.'),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const WritingScreen()),
+                  ),
                 ),
                 ModuleCardImage(
                   imagePath: 'assets/images/speaking.jpg',
                   title: 'Speaking',
                   lessonCount: '10 Lessons',
-                  onTap: () =>
-                      _showNotice(context, 'Opening Speaking lessons.'),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SpeakingScreen()),
+                  ),
                 ),
                 ModuleCardImage(
                   imagePath: 'assets/images/listening.jpg',
                   title: 'Listening',
                   lessonCount: '9 Lessons',
-                  onTap: () =>
-                      _showNotice(context, 'Opening Listening lessons.'),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ListeningScreen()),
+                  ),
                 ),
               ],
             ),
@@ -181,11 +189,11 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            for (final (label, icon) in _drawerOptions)
+            for (final item in _drawerOptions)
               ListTile(
-                leading: Icon(icon, color: _leafGreen),
+                leading: Icon(item.icon, color: _leafGreen),
                 title: Text(
-                  label,
+                  item.label,
                   style: const TextStyle(
                     color: _charcoal,
                     fontWeight: FontWeight.w600,
@@ -193,7 +201,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  _showNotice(context, '$label is ready to explore.');
+                  _showNotice(context, '${item.label} is ready to explore.');
                 },
               ),
           ],
@@ -441,7 +449,6 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-// Reusing this widget gives every module the same image size and card style.
 class ModuleCardImage extends StatelessWidget {
   const ModuleCardImage({
     required this.imagePath,
@@ -470,7 +477,6 @@ class ModuleCardImage extends StatelessWidget {
           ),
         ],
       ),
-      // Material provides the card's tap effect and keeps its corners rounded.
       child: Material(
         color: _warmCream,
         borderRadius: BorderRadius.circular(20),
@@ -478,26 +484,30 @@ class ModuleCardImage extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(12),
-            // Column stacks the illustration above its title and lesson count.
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Expanded gives the image the remaining card height.
-                Expanded(
+                SizedBox(
+                  height: 158,
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
                       color: _warmCream,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    // ClipRRect rounds the artwork corners; contain shows the
-                    // full illustration without cropping it.
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(14),
-                      child: Image.asset(
-                        imagePath,
-                        fit: BoxFit.contain,
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: SizedBox(
+                          width: 150,
+                          height: 150,
+                          child: Image.asset(
+                            imagePath,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                       ),
                     ),
                   ),

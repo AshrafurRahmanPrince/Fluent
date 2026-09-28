@@ -1,5 +1,3 @@
-// register_screen.dart — The screen where new users create an account.
-
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import '../widgets/custom_button.dart';
@@ -34,11 +32,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _handleSignUp() {
     if (_formKey.currentState!.validate()) {
-      // On success navigate to HomeScreen and clear the whole back stack
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const HomeScreen()),
-        (route) => false, // false removes every previous route
+        (route) => false,
       );
     }
   }
@@ -47,17 +44,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0F3822),
-
-      // ── App Bar ────────────────────────────────────────────────────────
-      // AppBar gives us the header bar with a back arrow automatically
       appBar: AppBar(
         backgroundColor: const Color(0xFF0F3822),
         elevation: 0,
-        // leading is the widget on the left side of the AppBar
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new,
               color: Color(0xFFFDFBF7), size: 20),
-          // Navigator.pop() goes back to the previous screen
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -70,7 +62,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         centerTitle: true,
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 16),
         child: Form(
@@ -78,7 +69,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Sub-heading ─────────────────────────────────────────
               const Text(
                 'Start your journey 🌱',
                 style: TextStyle(
@@ -95,7 +85,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               const SizedBox(height: 32),
 
-              // ── Full Name ────────────────────────────────────────────
               _buildSectionLabel('Full Name'),
               const SizedBox(height: 8),
               TextFormField(
@@ -117,7 +106,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               const SizedBox(height: 20),
 
-              // ── Email ────────────────────────────────────────────────
               _buildSectionLabel('Email Address'),
               const SizedBox(height: 8),
               TextFormField(
@@ -142,7 +130,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               const SizedBox(height: 20),
 
-              // ── Password ─────────────────────────────────────────────
               _buildSectionLabel('Password'),
               const SizedBox(height: 8),
               TextFormField(
@@ -177,7 +164,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               const SizedBox(height: 20),
 
-              // ── Confirm Password ─────────────────────────────────────
               _buildSectionLabel('Confirm Password'),
               const SizedBox(height: 8),
               TextFormField(
@@ -212,7 +198,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               const SizedBox(height: 36),
 
-              // ── Sign Up Button ───────────────────────────────────────
               CustomButton(
                 label: 'Create Account',
                 onPressed: _handleSignUp,
@@ -220,7 +205,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               const SizedBox(height: 24),
 
-              // ── Terms notice ─────────────────────────────────────────
               Center(
                 child: Text(
                   'By signing up you agree to our Terms & Privacy Policy.',
@@ -240,8 +224,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // A helper method that returns a styled label widget.
-  // Extracting repeated UI into methods keeps code DRY (Don't Repeat Yourself).
   Widget _buildSectionLabel(String text) {
     return Text(
       text,
