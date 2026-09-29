@@ -37,25 +37,39 @@ class ProgressCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              Text(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final percentageText = Text(
                 '$percentage%',
                 style: const TextStyle(
                   color: Color(0xFF3E8E55),
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                 ),
-              ),
-              const Spacer(),
-              Text(
+              );
+              final completedText = Text(
                 '$completedCount of $totalCount lessons completed',
                 style: TextStyle(
                   color: const Color(0xFF1C2A23).withValues(alpha: 0.68),
                   fontSize: 13,
                 ),
-              ),
-            ],
+              );
+
+              if (constraints.maxWidth < 360) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [percentageText, completedText],
+                );
+              }
+
+              return Row(
+                children: [
+                  percentageText,
+                  const Spacer(),
+                  completedText,
+                ],
+              );
+            },
           ),
           const SizedBox(height: 12),
           ClipRRect(
@@ -64,7 +78,8 @@ class ProgressCard extends StatelessWidget {
               value: progress,
               minHeight: 10,
               backgroundColor: const Color(0xFF0F3822).withValues(alpha: 0.12),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF3E8E55)),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(Color(0xFF3E8E55)),
             ),
           ),
         ],

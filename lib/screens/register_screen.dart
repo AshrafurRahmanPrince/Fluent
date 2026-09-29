@@ -82,9 +82,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 'Create a free Fluent account today.',
                 style: TextStyle(color: Color(0xFF6B8C7A), fontSize: 14),
               ),
-
               const SizedBox(height: 32),
-
               _buildSectionLabel('Full Name'),
               const SizedBox(height: 8),
               TextFormField(
@@ -103,9 +101,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   return null;
                 },
               ),
-
               const SizedBox(height: 20),
-
               _buildSectionLabel('Email Address'),
               const SizedBox(height: 8),
               TextFormField(
@@ -114,8 +110,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 style: const TextStyle(color: Color(0xFF0F3822)),
                 decoration: const InputDecoration(
                   hintText: 'you@example.com',
-                  prefixIcon: Icon(Icons.email_outlined,
-                      color: Color(0xFF3E8E55)),
+                  prefixIcon:
+                      Icon(Icons.email_outlined, color: Color(0xFF3E8E55)),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -127,9 +123,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   return null;
                 },
               ),
-
               const SizedBox(height: 20),
-
               _buildSectionLabel('Password'),
               const SizedBox(height: 8),
               TextFormField(
@@ -161,9 +155,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   return null;
                 },
               ),
-
               const SizedBox(height: 20),
-
               _buildSectionLabel('Confirm Password'),
               const SizedBox(height: 8),
               TextFormField(
@@ -195,16 +187,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   return null;
                 },
               ),
-
               const SizedBox(height: 36),
-
               CustomButton(
                 label: 'Create Account',
                 onPressed: _handleSignUp,
               ),
-
               const SizedBox(height: 24),
-
               Center(
                 child: Text(
                   'By signing up you agree to our Terms & Privacy Policy.',
@@ -215,7 +203,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 24),
             ],
           ),

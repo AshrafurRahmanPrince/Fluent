@@ -5,15 +5,11 @@ class LearningFeature {
     required this.title,
     required this.description,
     required this.icon,
-    required this.moduleName,
-    this.detail,
   });
 
   final String title;
   final String description;
   final IconData icon;
-  final String moduleName;
-  final String? detail;
 }
 
 class Lesson {
@@ -22,7 +18,6 @@ class Lesson {
     required this.level,
     required this.duration,
     required this.completed,
-    required this.moduleName,
     this.summary,
   });
 
@@ -30,7 +25,6 @@ class Lesson {
   final String level;
   final int duration;
   final bool completed;
-  final String moduleName;
   final String? summary;
 }
 

@@ -31,7 +31,8 @@ class ModuleFeatureCard extends StatelessWidget {
                   color: const Color(0xFF3E8E55).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(feature.icon, color: const Color(0xFF3E8E55), size: 24),
+                child: Icon(feature.icon,
+                    color: const Color(0xFF3E8E55), size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(

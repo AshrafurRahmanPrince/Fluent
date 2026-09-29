@@ -12,7 +12,16 @@ const Color _charcoal = Color(0xFF1C2A23);
 const Color _softWhite = Color(0xFFFDFBF7);
 const double _dailyProgress = 0.65;
 const List<double> _weeklyActivity = [0.48, 0.72, 0.58, 0.9, 0.65, 0.82, 0.35];
-const List<String> _weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const List<String> _weekdays = [
+  'Mon',
+  'Tue',
+  'Wed',
+  'Thu',
+  'Fri',
+  'Sat',
+  'Sun'
+];
+
 class _DrawerItem {
   final String label;
   final IconData icon;

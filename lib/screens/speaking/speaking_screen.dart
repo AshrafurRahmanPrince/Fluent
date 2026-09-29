@@ -9,7 +9,8 @@ class SpeakingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = moduleProgressValues['Speaking'] ??
-        const ModuleProgress(title: 'Speaking Progress', completed: 0, total: 0);
+        const ModuleProgress(
+            title: 'Speaking Progress', completed: 0, total: 0);
 
     return ModuleScreen(
       moduleName: 'Speaking',

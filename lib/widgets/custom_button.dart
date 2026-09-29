@@ -36,8 +36,7 @@ class CustomButton extends StatelessWidget {
                 height: 22,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.5,
-                  valueColor:
-                      AlwaysStoppedAnimation<Color>(Color(0xFFFDFBF7)),
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFDFBF7)),
                 ),
               )
             : Text(

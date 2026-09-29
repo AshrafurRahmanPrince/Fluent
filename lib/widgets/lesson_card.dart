@@ -5,14 +5,19 @@ class LessonCard extends StatelessWidget {
   const LessonCard({
     required this.lesson,
     required this.onTap,
+    this.statusLabel,
     super.key,
   });
 
   final Lesson lesson;
   final VoidCallback onTap;
+  final String? statusLabel;
 
   @override
   Widget build(BuildContext context) {
+    final status = statusLabel ?? (lesson.completed ? '✓' : 'Start');
+    final isCompleted = status.contains('Completed') || lesson.completed;
+
     return Material(
       color: const Color(0xFFF7F3E9),
       borderRadius: BorderRadius.circular(18),
@@ -54,20 +59,23 @@ class LessonCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    Row(
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 4,
                       children: [
                         Text(
                           lesson.level,
                           style: TextStyle(
-                            color: const Color(0xFF1C2A23).withValues(alpha: 0.7),
+                            color:
+                                const Color(0xFF1C2A23).withValues(alpha: 0.7),
                             fontSize: 12,
                           ),
                         ),
-                        const SizedBox(width: 10),
                         Text(
                           '${lesson.duration} min',
                           style: TextStyle(
-                            color: const Color(0xFF1C2A23).withValues(alpha: 0.7),
+                            color:
+                                const Color(0xFF1C2A23).withValues(alpha: 0.7),
                             fontSize: 12,
                           ),
                         ),
@@ -78,17 +86,18 @@ class LessonCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: lesson.completed
+                  color: isCompleted
                       ? const Color(0xFF3E8E55).withValues(alpha: 0.14)
                       : const Color(0xFF0F3822).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  lesson.completed ? '✓' : 'Start',
+                  status,
                   style: TextStyle(
-                    color: lesson.completed
+                    color: isCompleted
                         ? const Color(0xFF3E8E55)
                         : const Color(0xFF0F3822),
                     fontSize: 12,
