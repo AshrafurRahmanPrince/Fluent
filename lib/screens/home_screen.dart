@@ -110,51 +110,65 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 14),
-            GridView.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 14,
-              mainAxisSpacing: 14,
-              childAspectRatio: 1.14,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                ModuleCardImage(
-                  imagePath: 'assets/images/reading.jpg',
-                  title: 'Reading',
-                  lessonCount: '12 Lessons',
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ReadingScreen()),
-                  ),
-                ),
-                ModuleCardImage(
-                  imagePath: 'assets/images/writing.jpg',
-                  title: 'Writing',
-                  lessonCount: '8 Lessons',
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const WritingScreen()),
-                  ),
-                ),
-                ModuleCardImage(
-                  imagePath: 'assets/images/speaking.jpg',
-                  title: 'Speaking',
-                  lessonCount: '10 Lessons',
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const SpeakingScreen()),
-                  ),
-                ),
-                ModuleCardImage(
-                  imagePath: 'assets/images/listening.jpg',
-                  title: 'Listening',
-                  lessonCount: '9 Lessons',
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ListeningScreen()),
-                  ),
-                ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                const crossAxisSpacing = 14.0;
+                final crossAxisCount = constraints.maxWidth < 600 ? 1 : 2;
+                final cardWidth = (constraints.maxWidth -
+                        crossAxisSpacing * (crossAxisCount - 1)) /
+                    crossAxisCount;
+
+                return GridView.count(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: crossAxisSpacing,
+                  mainAxisSpacing: 14,
+                  childAspectRatio: cardWidth / 230,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    ModuleCardImage(
+                      imagePath: 'assets/images/reading.jpg',
+                      title: 'Reading',
+                      lessonCount: '12 Lessons',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const ReadingScreen()),
+                      ),
+                    ),
+                    ModuleCardImage(
+                      imagePath: 'assets/images/writing.jpg',
+                      title: 'Writing',
+                      lessonCount: '8 Lessons',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const WritingScreen()),
+                      ),
+                    ),
+                    ModuleCardImage(
+                      imagePath: 'assets/images/speaking.jpg',
+                      title: 'Speaking',
+                      lessonCount: '10 Lessons',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const SpeakingScreen()),
+                      ),
+                    ),
+                    ModuleCardImage(
+                      imagePath: 'assets/images/listening.jpg',
+                      title: 'Listening',
+                      lessonCount: '9 Lessons',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const ListeningScreen()),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 20),
             _buildStreakBanner(context),
@@ -493,44 +507,36 @@ class ModuleCardImage extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+            padding: const EdgeInsets.all(10),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(
-                  height: 158,
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: _warmCream,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: Align(
-                        alignment: Alignment.center,
-                        child: SizedBox(
-                          width: 150,
-                          height: 150,
-                          child: Image.asset(
-                            imagePath,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      ),
+                Container(
+                  width: 150,
+                  height: 128,
+                  decoration: BoxDecoration(
+                    color: _warmCream,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Image.asset(
+                      imagePath,
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
-                const SizedBox(height: 9),
+                const SizedBox(height: 7),
                 Text(
                   title,
                   style: const TextStyle(
                     color: _charcoal,
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 2),
                 Text(
                   lessonCount,
                   style: TextStyle(

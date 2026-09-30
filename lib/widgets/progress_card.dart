@@ -6,6 +6,7 @@ class ProgressCard extends StatelessWidget {
     required this.progress,
     required this.completedCount,
     required this.totalCount,
+    this.completedLabel = 'lessons',
     super.key,
   });
 
@@ -13,6 +14,7 @@ class ProgressCard extends StatelessWidget {
   final double progress;
   final int completedCount;
   final int totalCount;
+  final String completedLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +50,7 @@ class ProgressCard extends StatelessWidget {
                 ),
               );
               final completedText = Text(
-                '$completedCount of $totalCount lessons completed',
+                '$completedCount of $totalCount $completedLabel completed',
                 style: TextStyle(
                   color: const Color(0xFF1C2A23).withValues(alpha: 0.68),
                   fontSize: 13,
