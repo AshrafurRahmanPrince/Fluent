@@ -35,6 +35,36 @@ void main() {
     expect(find.text('Reading'), findsWidgets);
   });
 
+  testWidgets('Dashboard opens the daily quiz, profile, and settings',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(const MaterialApp(home: HomeScreen()));
+
+    await tester.tap(find.text('Daily Quiz').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Question 1 of 5'), findsOneWidget);
+    await tester.tap(find.text('Quick'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    expect(find.text('Question 2 of 5'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Profile'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(AppBar, 'Profile'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(AppBar, 'Settings'), findsOneWidget);
+  });
+
   testWidgets('Login screen scrolls on a short screen and opens registration',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(390, 400);

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'daily_quiz_screen.dart';
 import 'listening/listening_screen.dart';
+import 'profile_screen.dart';
 import 'reading/reading_screen.dart';
+import 'settings_screen.dart';
 import 'speaking/speaking_screen.dart';
 import 'writing/writing_screen.dart';
 
@@ -224,7 +227,19 @@ class HomeScreen extends StatelessWidget {
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  _showNotice(context, '${item.label} is ready to explore.');
+                  final screen = switch (item.label) {
+                    'Profile' => const ProfileScreen(),
+                    'Settings' => const SettingsScreen(),
+                    _ => null,
+                  };
+                  if (screen != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => screen),
+                    );
+                  } else {
+                    _showNotice(context, '${item.label} is ready to explore.');
+                  }
                 },
               ),
           ],
@@ -357,7 +372,10 @@ class HomeScreen extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: () => _showNotice(context, 'Daily Quiz is coming soon.'),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const DailyQuizScreen()),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -395,8 +413,10 @@ class HomeScreen extends StatelessWidget {
               ),
               IconButton(
                 tooltip: 'Start daily quiz',
-                onPressed: () =>
-                    _showNotice(context, 'Daily Quiz is coming soon.'),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const DailyQuizScreen()),
+                ),
                 icon:
                     const Icon(Icons.arrow_forward_rounded, color: _softWhite),
               ),
