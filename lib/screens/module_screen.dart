@@ -3,6 +3,8 @@ import 'package:fluento/models/learning_models.dart';
 import 'package:fluento/screens/feature_practice_screen.dart';
 import 'package:fluento/screens/lesson_detail_screen.dart';
 import 'package:fluento/screens/reading/reading_experience_screen.dart';
+import 'package:fluento/screens/speaking/speaking_activity_screen.dart';
+import 'package:fluento/screens/speaking/speaking_lesson_screen.dart';
 import 'package:fluento/widgets/lesson_card.dart';
 import 'package:fluento/widgets/module_feature_card.dart';
 import 'package:fluento/widgets/progress_card.dart';
@@ -33,16 +35,23 @@ class ModuleScreen extends StatefulWidget {
 class _ModuleScreenState extends State<ModuleScreen> {
   static const _completedKey = 'reading_completed_lessons';
   static const _startedKey = 'reading_started_lessons';
+  static const _speakingCompletedLessonsKey = 'speaking_completed_lessons';
+  static const _speakingCompletedActivitiesKey =
+      'speaking_completed_activities';
 
   final Set<String> _completedReadingLessons = {};
   final Set<String> _startedReadingLessons = {};
+  final Set<String> _completedSpeakingLessons = {};
+  final Set<String> _completedSpeakingActivities = {};
 
   bool get _isReading => widget.moduleName == 'Reading';
+  bool get _isSpeaking => widget.moduleName == 'Speaking';
 
   @override
   void initState() {
     super.initState();
     if (_isReading) _loadReadingProgress();
+    if (_isSpeaking) _loadSpeakingProgress();
   }
 
   Future<void> _loadReadingProgress() async {
@@ -56,6 +65,52 @@ class _ModuleScreenState extends State<ModuleScreen> {
         preferences.getStringList(_startedKey) ?? const [],
       );
     });
+  }
+
+  Future<void> _loadSpeakingProgress() async {
+    final preferences = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _completedSpeakingLessons.addAll(
+        preferences.getStringList(_speakingCompletedLessonsKey) ??
+            widget.lessons
+                .where((lesson) => lesson.completed)
+                .map((lesson) => lesson.title),
+      );
+      _completedSpeakingActivities.addAll(
+        preferences.getStringList(_speakingCompletedActivitiesKey) ?? const [],
+      );
+    });
+  }
+
+  Future<void> _openSpeakingActivity(LearningFeature feature) async {
+    final completed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SpeakingActivityScreen(featureTitle: feature.title),
+      ),
+    );
+    if (completed != true || !mounted) return;
+    setState(() => _completedSpeakingActivities.add(feature.title));
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setStringList(
+      _speakingCompletedActivitiesKey,
+      _completedSpeakingActivities.toList(),
+    );
+  }
+
+  Future<void> _openSpeakingLesson(Lesson lesson) async {
+    final completed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => SpeakingLessonScreen(lesson: lesson)),
+    );
+    if (completed != true || !mounted) return;
+    setState(() => _completedSpeakingLessons.add(lesson.title));
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setStringList(
+      _speakingCompletedLessonsKey,
+      _completedSpeakingLessons.toList(),
+    );
   }
 
   Future<void> _openReadingLesson(Lesson lesson) async {
@@ -87,15 +142,70 @@ class _ModuleScreenState extends State<ModuleScreen> {
     );
   }
 
+  void _openFeature(LearningFeature feature) {
+    if (_isSpeaking) {
+      _openSpeakingActivity(feature);
+      return;
+    }
+
+    final screen = _isReading
+        ? ReadingExperienceScreen(skillTitle: feature.title)
+        : FeaturePracticeScreen(feature: feature);
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => screen),
+    );
+  }
+
+  Future<void> _openLesson(Lesson lesson) async {
+    if (_isReading) {
+      await _openReadingLesson(lesson);
+    } else if (_isSpeaking) {
+      await _openSpeakingLesson(lesson);
+    } else {
+      await Navigator.push<void>(
+        context,
+        MaterialPageRoute(builder: (_) => LessonDetailScreen(lesson: lesson)),
+      );
+    }
+  }
+
+  String? _lessonStatus(Lesson lesson) {
+    if (_isReading) {
+      if (_completedReadingLessons.contains(lesson.title)) return '✓ Completed';
+      if (_startedReadingLessons.contains(lesson.title)) return 'Continue';
+      return 'Start';
+    }
+    if (_isSpeaking) {
+      return _completedSpeakingLessons.contains(lesson.title)
+          ? '✓ Completed'
+          : 'Start';
+    }
+    return null;
+  }
+
+  ModuleProgress get _moduleProgress {
+    if (_isReading) {
+      return ModuleProgress(
+        title: widget.progress.title,
+        completed: _completedReadingLessons.length,
+        total: widget.lessons.length,
+      );
+    }
+    if (_isSpeaking) {
+      return ModuleProgress(
+        title: widget.progress.title,
+        completed: _completedSpeakingLessons.length +
+            _completedSpeakingActivities.length,
+        total: widget.lessons.length + widget.features.length,
+      );
+    }
+    return widget.progress;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final progress = _isReading
-        ? ModuleProgress(
-            title: widget.progress.title,
-            completed: _completedReadingLessons.length,
-            total: widget.lessons.length,
-          )
-        : widget.progress;
+    final progress = _moduleProgress;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F3822),
@@ -144,6 +254,7 @@ class _ModuleScreenState extends State<ModuleScreen> {
                 progress: progress.percent,
                 completedCount: progress.completed,
                 totalCount: progress.total,
+                completedLabel: _isSpeaking ? 'learning activities' : 'lessons',
               ),
               const SizedBox(height: 26),
               Text(
@@ -165,14 +276,7 @@ class _ModuleScreenState extends State<ModuleScreen> {
                   final feature = widget.features[index];
                   return ModuleFeatureCard(
                     feature: feature,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => _isReading
-                            ? ReadingExperienceScreen(skillTitle: feature.title)
-                            : FeaturePracticeScreen(feature: feature),
-                      ),
-                    ),
+                    onTap: () => _openFeature(feature),
                   );
                 },
               ),
@@ -196,22 +300,8 @@ class _ModuleScreenState extends State<ModuleScreen> {
                   final lesson = widget.lessons[index];
                   return LessonCard(
                     lesson: lesson,
-                    statusLabel: _isReading
-                        ? _completedReadingLessons.contains(lesson.title)
-                            ? '✓ Completed'
-                            : _startedReadingLessons.contains(lesson.title)
-                                ? 'Continue'
-                                : 'Start'
-                        : null,
-                    onTap: () => _isReading
-                        ? _openReadingLesson(lesson)
-                        : Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  LessonDetailScreen(lesson: lesson),
-                            ),
-                          ),
+                    statusLabel: _lessonStatus(lesson),
+                    onTap: () => _openLesson(lesson),
                   );
                 },
               ),
