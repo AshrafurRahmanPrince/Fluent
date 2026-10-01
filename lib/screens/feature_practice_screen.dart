@@ -30,6 +30,15 @@ class FeaturePracticeScreen extends StatefulWidget {
 }
 
 class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
+  Color get _pageBackground => Theme.of(context).scaffoldBackgroundColor;
+  Color get _surface => Theme.of(context).colorScheme.surface;
+  Color get _onSurface => Theme.of(context).colorScheme.onSurface;
+  Color get _primary => Theme.of(context).colorScheme.primary;
+  Color get _secondary => Theme.of(context).colorScheme.secondary;
+  Color get _accentSurface => Theme.of(context).colorScheme.surfaceContainer;
+  Color get _onPrimary => Theme.of(context).colorScheme.onPrimary;
+  Color get _error => Theme.of(context).colorScheme.error;
+
   final Map<String, String> selectedAnswers = {};
   final Map<String, String> answerFeedback = {};
   final TextEditingController paragraphController = TextEditingController();
@@ -419,11 +428,12 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
     required String subtitle,
     required List<Widget> sections,
   }) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFF0F3822),
+      backgroundColor: _pageBackground,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F3822),
-        foregroundColor: const Color(0xFFFDFBF7),
+        backgroundColor: _pageBackground,
+        foregroundColor: colors.onSurface,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
@@ -441,7 +451,7 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7F3E9),
+                  color: _surface,
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: Column(
@@ -449,8 +459,8 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
-                        color: Color(0xFF1C2A23),
+                      style: TextStyle(
+                        color: _onSurface,
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
@@ -459,7 +469,7 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
                     Text(
                       subtitle,
                       style: TextStyle(
-                        color: const Color(0xFF1C2A23).withValues(alpha: 0.7),
+                        color: _onSurface.withValues(alpha: 0.7),
                         fontSize: 14,
                         height: 1.5,
                       ),
@@ -482,7 +492,7 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
       margin: const EdgeInsets.only(bottom: 18),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F3E9),
+        color: _surface,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
@@ -490,8 +500,8 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: Color(0xFF1C2A23),
+            style: TextStyle(
+              color: _onSurface,
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
@@ -509,14 +519,13 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.check_circle_rounded,
-              color: Color(0xFF3E8E55), size: 18),
+          Icon(Icons.check_circle_rounded, color: _primary, size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                color: Color(0xFF1C2A23),
+              style: TextStyle(
+                color: _onSurface,
                 height: 1.5,
               ),
             ),
@@ -532,13 +541,13 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF3E8E55).withValues(alpha: 0.08),
+        color: _primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          color: Color(0xFF1C2A23),
+        style: TextStyle(
+          color: _onSurface,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -551,7 +560,7 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
       margin: const EdgeInsets.only(bottom: 18),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F3E9),
+        color: _surface,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
@@ -559,16 +568,16 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
         children: [
           Text(
             'Question ${index + 1}',
-            style: const TextStyle(
-              color: Color(0xFF3E8E55),
+            style: TextStyle(
+              color: _primary,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             question.question,
-            style: const TextStyle(
-              color: Color(0xFF1C2A23),
+            style: TextStyle(
+              color: _onSurface,
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
@@ -588,13 +597,13 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? const Color(0xFF3E8E55).withValues(alpha: 0.12)
-                      : const Color(0xFF0F3822).withValues(alpha: 0.04),
+                      ? _primary.withValues(alpha: 0.12)
+                      : _onSurface.withValues(alpha: 0.04),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isSelected
-                        ? const Color(0xFF3E8E55)
-                        : const Color(0xFF0F3822).withValues(alpha: 0.08),
+                        ? _primary
+                        : _onSurface.withValues(alpha: 0.08),
                   ),
                 ),
                 child: Row(
@@ -606,8 +615,8 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isSelected
-                              ? const Color(0xFF3E8E55)
-                              : const Color(0xFF0F3822).withValues(alpha: 0.45),
+                              ? _primary
+                              : _onSurface.withValues(alpha: 0.45),
                           width: 2,
                         ),
                       ),
@@ -616,8 +625,8 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
                               child: Container(
                                 width: 10,
                                 height: 10,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF3E8E55),
+                                decoration: BoxDecoration(
+                                  color: _primary,
                                   shape: BoxShape.circle,
                                 ),
                               ),
@@ -628,8 +637,8 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
                     Expanded(
                       child: Text(
                         option,
-                        style: const TextStyle(
-                          color: Color(0xFF1C2A23),
+                        style: TextStyle(
+                          color: _onSurface,
                         ),
                       ),
                     ),
@@ -671,20 +680,20 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
         _buildBulletRow('Object = what is affected'),
       ]),
       _buildSectionCard('Sentence Types', [
-        const Text('Positive: I like English.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
-        const Text('Negative: I do not like English.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
-        const Text('Question: Do you like English?',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
-        const Text('Command: Open the book.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+        Text('Positive: I like English.',
+            style: TextStyle(color: _onSurface, height: 1.5)),
+        Text('Negative: I do not like English.',
+            style: TextStyle(color: _onSurface, height: 1.5)),
+        Text('Question: Do you like English?',
+            style: TextStyle(color: _onSurface, height: 1.5)),
+        Text('Command: Open the book.',
+            style: TextStyle(color: _onSurface, height: 1.5)),
       ]),
       _buildSectionCard('Word Order Practice', [
         Text(
           'Put the words in the correct order.',
           style: TextStyle(
-            color: const Color(0xFF1C2A23).withValues(alpha: 0.8),
+            color: _onSurface.withValues(alpha: 0.8),
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -697,10 +706,10 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
             return ChoiceChip(
               label: Text(word),
               selected: alreadySelected,
-              selectedColor: const Color(0xFF3E8E55),
-              backgroundColor: const Color(0xFFe9f0ea),
+              selectedColor: _primary,
+              backgroundColor: _accentSurface,
               labelStyle: TextStyle(
-                color: alreadySelected ? Colors.white : const Color(0xFF1C2A23),
+                color: alreadySelected ? _onPrimary : _onSurface,
                 fontWeight: FontWeight.w600,
               ),
               onSelected: (_) {
@@ -726,15 +735,14 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: const Color(0xFF0F3822).withValues(alpha: 0.04),
+            color: _onSurface.withValues(alpha: 0.04),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             selectedSentenceWords.isEmpty
                 ? 'Your sentence: '
                 : 'Your sentence: ${selectedSentenceWords.join(' ')}',
-            style: const TextStyle(
-                color: Color(0xFF1C2A23), fontWeight: FontWeight.w600),
+            style: TextStyle(color: _onSurface, fontWeight: FontWeight.w600),
           ),
         ),
         const SizedBox(height: 12),
@@ -752,8 +760,8 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
                   });
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3E8E55),
-                  foregroundColor: Colors.white,
+                  backgroundColor: _primary,
+                  foregroundColor: _onPrimary,
                 ),
                 child: const Text('Check Answer'),
               ),
@@ -778,15 +786,13 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: sentenceFeedback.startsWith('Great')
-                  ? const Color(0xFF3E8E55).withValues(alpha: 0.12)
-                  : const Color(0xFFB86A3C).withValues(alpha: 0.12),
+              color: (sentenceFeedback.startsWith('Great') ? _primary : _error)
+                  .withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
               sentenceFeedback,
-              style: const TextStyle(
-                  color: Color(0xFF1C2A23), fontWeight: FontWeight.w600),
+              style: TextStyle(color: _onSurface, fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -801,8 +807,8 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
             });
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF0F3822),
-            foregroundColor: Colors.white,
+            backgroundColor: _secondary,
+            foregroundColor: _onPrimary,
           ),
           child: const Text('Next Example'),
         ),
@@ -821,8 +827,8 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
         child: ElevatedButton(
           onPressed: _submitPractice,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF3E8E55),
-            foregroundColor: Colors.white,
+            backgroundColor: _primary,
+            foregroundColor: _onPrimary,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -836,13 +842,12 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: const Color(0xFF2D6A4F),
+            color: _secondary,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             resultText,
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold),
+            style: TextStyle(color: _onPrimary, fontWeight: FontWeight.bold),
           ),
         ),
       ],
@@ -887,13 +892,13 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
         _buildExample('Ali is tired. He wants to rest.'),
       ],
       'Adjectives': [
-        const Text('Adjectives describe nouns.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.6)),
+        Text('Adjectives describe nouns.',
+            style: TextStyle(color: _onSurface, height: 1.6)),
         _buildExample('a happy student, a red bag'),
       ],
       'Adverbs': [
-        const Text('Adverbs tell how something is done.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.6)),
+        Text('Adverbs tell how something is done.',
+            style: TextStyle(color: _onSurface, height: 1.6)),
         _buildExample('She sings beautifully.'),
       ],
     };
@@ -908,10 +913,10 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
             return ChoiceChip(
               label: Text(topic),
               selected: isSelected,
-              selectedColor: const Color(0xFF3E8E55),
-              backgroundColor: const Color(0xFFe9f0ea),
+              selectedColor: _primary,
+              backgroundColor: _accentSurface,
               labelStyle: TextStyle(
-                color: isSelected ? Colors.white : const Color(0xFF1C2A23),
+                color: isSelected ? _onPrimary : _onSurface,
                 fontWeight: FontWeight.w600,
               ),
               onSelected: (_) {
@@ -933,8 +938,8 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
         child: ElevatedButton(
           onPressed: _submitPractice,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF3E8E55),
-            foregroundColor: Colors.white,
+            backgroundColor: _primary,
+            foregroundColor: _onPrimary,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -948,13 +953,12 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: const Color(0xFF2D6A4F),
+            color: _secondary,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             resultText,
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold),
+            style: TextStyle(color: _onPrimary, fontWeight: FontWeight.bold),
           ),
         ),
       ],
@@ -1002,8 +1006,8 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
         _buildExample('Evidence: proof'),
       ],
       'Linking Words': [
-        const Text('However, therefore, because, although, for example.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.6)),
+        Text('However, therefore, because, although, for example.',
+            style: TextStyle(color: _onSurface, height: 1.6)),
         _buildExample('I was tired. However, I finished my work.'),
       ],
     };
@@ -1021,10 +1025,10 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
             return ChoiceChip(
               label: Text(category),
               selected: isSelected,
-              selectedColor: const Color(0xFF3E8E55),
-              backgroundColor: const Color(0xFFe9f0ea),
+              selectedColor: _primary,
+              backgroundColor: _accentSurface,
               labelStyle: TextStyle(
-                color: isSelected ? Colors.white : const Color(0xFF1C2A23),
+                color: isSelected ? _onPrimary : _onSurface,
                 fontWeight: FontWeight.w600,
               ),
               onSelected: (_) {
@@ -1037,18 +1041,16 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
         ),
       ]),
       _buildSectionCard(selectedVocabularyCategory, [
-        const Text('Word: improve',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
-        const Text('Meaning: make better',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
-        const Text('Example: I want to improve my English.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+        Text('Word: improve', style: TextStyle(color: _onSurface, height: 1.5)),
+        Text('Meaning: make better',
+            style: TextStyle(color: _onSurface, height: 1.5)),
+        Text('Example: I want to improve my English.',
+            style: TextStyle(color: _onSurface, height: 1.5)),
         ...categoryContent,
       ]),
       _buildSectionCard('Practice', [
-        const Text(
-            'Fill in the blank: "I studied hard; ___, I passed the exam."',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+        Text('Fill in the blank: "I studied hard; ___, I passed the exam."',
+            style: TextStyle(color: _onSurface, height: 1.5)),
         const SizedBox(height: 8),
         ...['therefore', 'however', 'although', 'because'].map((option) {
           final isSelected = selectedAnswers['vocabulary_blank'] == option;
@@ -1063,12 +1065,11 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? const Color(0xFF3E8E55).withValues(alpha: 0.12)
-                    : const Color(0xFF0F3822).withValues(alpha: 0.04),
+                    ? _primary.withValues(alpha: 0.12)
+                    : _onSurface.withValues(alpha: 0.04),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(option,
-                  style: const TextStyle(color: Color(0xFF1C2A23))),
+              child: Text(option, style: TextStyle(color: _onSurface)),
             ),
           );
         }),
@@ -1083,8 +1084,8 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
             });
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF3E8E55),
-            foregroundColor: Colors.white,
+            backgroundColor: _primary,
+            foregroundColor: _onPrimary,
           ),
           child: const Text('Check Answer'),
         ),
@@ -1094,13 +1095,12 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF2D6A4F).withValues(alpha: 0.08),
+              color: _secondary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
               answerFeedback['vocabulary_blank']!,
-              style: const TextStyle(
-                  color: Color(0xFF1C2A23), fontWeight: FontWeight.w600),
+              style: TextStyle(color: _onSurface, fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -1130,8 +1130,8 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
             'My hobby is reading. I read every evening. It helps me relax.'),
       ]),
       _buildSectionCard('Format', [
-        const Text('Topic sentence → details → closing sentence',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.6)),
+        Text('Topic sentence → details → closing sentence',
+            style: TextStyle(color: _onSurface, height: 1.6)),
       ]),
       _buildSectionCard('Topics', [
         Wrap(
@@ -1142,8 +1142,8 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
             return ChoiceChip(
               label: Text(topic),
               selected: isSelected,
-              selectedColor: const Color(0xFF3E8E55),
-              backgroundColor: const Color(0xFFe9f0ea),
+              selectedColor: _primary,
+              backgroundColor: _accentSurface,
               onSelected: (_) {
                 setState(() {
                   selectedParagraphTopic = topic;
@@ -1155,8 +1155,7 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
       ]),
       _buildSectionCard('Write a paragraph', [
         Text('Topic: $selectedParagraphTopic',
-            style: const TextStyle(
-                color: Color(0xFF1C2A23), fontWeight: FontWeight.w700)),
+            style: TextStyle(color: _onSurface, fontWeight: FontWeight.w700)),
         const SizedBox(height: 10),
         TextField(
           controller: paragraphController,
@@ -1164,7 +1163,7 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
           decoration: InputDecoration(
             hintText: 'Write a paragraph about this topic...',
             filled: true,
-            fillColor: Colors.white,
+            fillColor: _surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide.none,
@@ -1205,8 +1204,8 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
             );
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF3E8E55),
-            foregroundColor: Colors.white,
+            backgroundColor: _primary,
+            foregroundColor: _onPrimary,
           ),
           child: const Text('Check My Paragraph'),
         ),
@@ -1237,8 +1236,8 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
             return ChoiceChip(
               label: Text(type),
               selected: isSelected,
-              selectedColor: const Color(0xFF3E8E55),
-              backgroundColor: const Color(0xFFe9f0ea),
+              selectedColor: _primary,
+              backgroundColor: _accentSurface,
               onSelected: (_) {
                 setState(() {
                   selectedEmailType = type;
@@ -1250,23 +1249,23 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
       ]),
       _buildSectionCard(selectedEmailType, [
         if (selectedEmailType == 'Formal Email') ...[
-          const Text('Subject: Request for Leave',
-              style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
-          const Text('Dear Sir/Madam,',
-              style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
-          const Text('I am writing to request leave for two days.',
-              style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
-          const Text('Yours sincerely,',
-              style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+          Text('Subject: Request for Leave',
+              style: TextStyle(color: _onSurface, height: 1.5)),
+          Text('Dear Sir/Madam,',
+              style: TextStyle(color: _onSurface, height: 1.5)),
+          Text('I am writing to request leave for two days.',
+              style: TextStyle(color: _onSurface, height: 1.5)),
+          Text('Yours sincerely,',
+              style: TextStyle(color: _onSurface, height: 1.5)),
         ] else ...[
-          const Text('Subject: My Weekend',
-              style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
-          const Text('Hi [Friend\'s Name],',
-              style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
-          const Text('How are you? I had a nice weekend.',
-              style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
-          const Text('Best wishes,',
-              style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+          Text('Subject: My Weekend',
+              style: TextStyle(color: _onSurface, height: 1.5)),
+          Text('Hi [Friend\'s Name],',
+              style: TextStyle(color: _onSurface, height: 1.5)),
+          Text('How are you? I had a nice weekend.',
+              style: TextStyle(color: _onSurface, height: 1.5)),
+          Text('Best wishes,',
+              style: TextStyle(color: _onSurface, height: 1.5)),
         ],
       ]),
       _buildSectionCard('Quick Rules', [
@@ -1284,8 +1283,8 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
             return ChoiceChip(
               label: Text(topic),
               selected: isSelected,
-              selectedColor: const Color(0xFF3E8E55),
-              backgroundColor: const Color(0xFFe9f0ea),
+              selectedColor: _primary,
+              backgroundColor: _accentSurface,
               onSelected: (_) {
                 setState(() {
                   selectedEmailTopic = topic;
@@ -1297,17 +1296,15 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
       ]),
       _buildSectionCard('Write an email', [
         Text('Email type: $selectedEmailType',
-            style: const TextStyle(
-                color: Color(0xFF1C2A23), fontWeight: FontWeight.bold)),
-        Text('Topic: $selectedEmailTopic',
-            style: const TextStyle(color: Color(0xFF1C2A23))),
+            style: TextStyle(color: _onSurface, fontWeight: FontWeight.bold)),
+        Text('Topic: $selectedEmailTopic', style: TextStyle(color: _onSurface)),
         const SizedBox(height: 10),
         TextField(
           controller: emailSubjectController,
           decoration: InputDecoration(
             labelText: 'Subject',
             filled: true,
-            fillColor: Colors.white,
+            fillColor: _surface,
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide.none),
@@ -1319,7 +1316,7 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
           decoration: InputDecoration(
             labelText: 'Recipient',
             filled: true,
-            fillColor: Colors.white,
+            fillColor: _surface,
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide.none),
@@ -1332,7 +1329,7 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
           decoration: InputDecoration(
             hintText: 'Write an email about $selectedEmailTopic...',
             filled: true,
-            fillColor: Colors.white,
+            fillColor: _surface,
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide.none),
@@ -1384,8 +1381,8 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
             return ChoiceChip(
               label: Text(topic),
               selected: isSelected,
-              selectedColor: const Color(0xFF3E8E55),
-              backgroundColor: const Color(0xFFe9f0ea),
+              selectedColor: _primary,
+              backgroundColor: _accentSurface,
               onSelected: (_) {
                 setState(() {
                   selectedStoryTopic = topic;
@@ -1397,11 +1394,10 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
       ]),
       _buildSectionCard('Story Practice', [
         Text('Topic: $selectedStoryTopic',
-            style: const TextStyle(
-                color: Color(0xFF1C2A23), fontWeight: FontWeight.bold)),
+            style: TextStyle(color: _onSurface, fontWeight: FontWeight.bold)),
         const SizedBox(height: 10),
-        const Text('Start: "One morning, I found a small bag..."',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+        Text('Start: "One morning, I found a small bag..."',
+            style: TextStyle(color: _onSurface, height: 1.5)),
         const SizedBox(height: 10),
         TextField(
           controller: storyController,
@@ -1409,7 +1405,7 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
           decoration: InputDecoration(
             hintText: 'Continue the story here...',
             filled: true,
-            fillColor: Colors.white,
+            fillColor: _surface,
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide.none),
@@ -1451,30 +1447,27 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
               children: [
                 const SizedBox(height: 8),
                 Text('Wrong: ${example['incorrect']}',
-                    style:
-                        const TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+                    style: TextStyle(color: _onSurface, height: 1.5)),
                 Text('Right: ${example['correct']}',
-                    style: const TextStyle(
-                        color: Color(0xFF3E8E55),
+                    style: TextStyle(
+                        color: _primary,
                         fontWeight: FontWeight.bold,
                         height: 1.5)),
                 Text('Why: ${example['explanation']}',
-                    style:
-                        const TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+                    style: TextStyle(color: _onSurface, height: 1.5)),
               ],
             )),
       ]),
       _buildSectionCard('Practice', [
-        const Text('Correct this sentence: "He dont like coffee."',
-            style: TextStyle(
-                color: Color(0xFF1C2A23), fontWeight: FontWeight.w600)),
+        Text('Correct this sentence: "He dont like coffee."',
+            style: TextStyle(color: _onSurface, fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         TextField(
           controller: correctionController,
           decoration: InputDecoration(
             hintText: 'Type your corrected sentence...',
             filled: true,
-            fillColor: Colors.white,
+            fillColor: _surface,
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide.none),
@@ -1507,8 +1500,8 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
             );
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF3E8E55),
-            foregroundColor: Colors.white,
+            backgroundColor: _primary,
+            foregroundColor: _onPrimary,
           ),
           child: const Text('Check Answer'),
         ),
@@ -1564,10 +1557,10 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
       default:
         final questions = _getQuestionsForFeature();
         return Scaffold(
-          backgroundColor: const Color(0xFF0F3822),
+          backgroundColor: _pageBackground,
           appBar: AppBar(
-            backgroundColor: const Color(0xFF0F3822),
-            foregroundColor: const Color(0xFFFDFBF7),
+            backgroundColor: _pageBackground,
+            foregroundColor: _onSurface,
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_rounded),
@@ -1585,7 +1578,7 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF7F3E9),
+                      color: _surface,
                       borderRadius: BorderRadius.circular(18),
                     ),
                     child: Column(
@@ -1593,8 +1586,8 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
                       children: [
                         Text(
                           widget.feature.title,
-                          style: const TextStyle(
-                            color: Color(0xFF1C2A23),
+                          style: TextStyle(
+                            color: _onSurface,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1603,8 +1596,7 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
                         Text(
                           widget.feature.description,
                           style: TextStyle(
-                            color:
-                                const Color(0xFF1C2A23).withValues(alpha: 0.72),
+                            color: _onSurface.withValues(alpha: 0.72),
                             fontSize: 14,
                           ),
                         ),
@@ -1620,8 +1612,8 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
                     child: ElevatedButton(
                       onPressed: _submitPractice,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF3E8E55),
-                        foregroundColor: const Color(0xFFFDFBF7),
+                        backgroundColor: _primary,
+                        foregroundColor: _onPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -1636,13 +1628,13 @@ class _FeaturePracticeScreenState extends State<FeaturePracticeScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2D6A4F),
+                        color: _secondary,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Text(
                         resultText,
-                        style: const TextStyle(
-                          color: Color(0xFFFDFBF7),
+                        style: TextStyle(
+                          color: _onPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

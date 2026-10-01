@@ -5,11 +5,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:fluento/data/speaking_content.dart';
 import 'package:fluento/models/speaking_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-const _green = Color(0xFF0F3822);
-const _cream = Color(0xFFF7F3E9);
-const _leaf = Color(0xFF3E8E55);
-const _charcoal = Color(0xFF1C2A23);
+import '../../services/user_progress_service.dart';
 
 class SpeakingActivityScreen extends StatefulWidget {
   const SpeakingActivityScreen({required this.featureTitle, super.key});
@@ -35,7 +31,13 @@ class _SpeakingActivityScreenState extends State<SpeakingActivityScreen> {
   int _secondsRemaining = 60;
   bool _recording = false;
   bool _activityComplete = false;
+  bool _activityCompleting = false;
   bool _showSampleAnswer = false;
+
+  Color get _green => Theme.of(context).scaffoldBackgroundColor;
+  Color get _cream => Theme.of(context).colorScheme.surface;
+  Color get _leaf => Theme.of(context).colorScheme.primary;
+  Color get _charcoal => Theme.of(context).colorScheme.onSurface;
 
   List<PronunciationWord> get _words =>
       pronunciationWords.where((item) => item.level == _level).toList();
@@ -87,16 +89,25 @@ class _SpeakingActivityScreenState extends State<SpeakingActivityScreen> {
   }
 
   Future<void> _completeActivity() async {
-    if (_activityComplete) return;
-    final preferences = await SharedPreferences.getInstance();
-    final completed = preferences.getStringList(_completedKey)?.toSet() ?? {};
-    completed.add(widget.featureTitle);
-    await preferences.setStringList(_completedKey, completed.toList());
-    if (!mounted) return;
-    setState(() => _activityComplete = true);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Speaking activity completed. Well done!')),
-    );
+    if (_activityComplete || _activityCompleting) return;
+    _activityCompleting = true;
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      final completed = preferences.getStringList(_completedKey)?.toSet() ?? {};
+      completed.add(widget.featureTitle);
+      await preferences.setStringList(_completedKey, completed.toList());
+      await UserProgressService.instance.logDailyActivity(
+        activityType: 'speaking_activity',
+      );
+      if (!mounted) return;
+      setState(() => _activityComplete = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Speaking activity completed. Well done!')),
+      );
+    } finally {
+      _activityCompleting = false;
+    }
   }
 
   void _startTimer(int seconds, {bool completeWhenFinished = false}) {
@@ -161,7 +172,7 @@ class _SpeakingActivityScreenState extends State<SpeakingActivityScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
-              style: const TextStyle(
+              style: TextStyle(
                   color: _charcoal, fontSize: 17, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           ...children,
@@ -186,7 +197,7 @@ class _SpeakingActivityScreenState extends State<SpeakingActivityScreen> {
       decoration: InputDecoration(
         labelText: 'Difficulty',
         filled: true,
-        fillColor: Colors.white,
+        fillColor: Theme.of(context).colorScheme.surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -212,8 +223,8 @@ class _SpeakingActivityScreenState extends State<SpeakingActivityScreen> {
       return OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          foregroundColor: _green,
-          side: const BorderSide(color: _leaf),
+          foregroundColor: Theme.of(context).colorScheme.onSurface,
+          side: BorderSide(color: _leaf),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -224,7 +235,7 @@ class _SpeakingActivityScreenState extends State<SpeakingActivityScreen> {
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: _leaf,
-        foregroundColor: Colors.white,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: child,
@@ -242,7 +253,7 @@ class _SpeakingActivityScreenState extends State<SpeakingActivityScreen> {
           value: value,
           minHeight: 8,
           backgroundColor: _green.withValues(alpha: 0.12),
-          valueColor: const AlwaysStoppedAnimation(_leaf),
+          valueColor: AlwaysStoppedAnimation(_leaf),
         ),
       ),
     ]);
@@ -523,7 +534,7 @@ class _SpeakingActivityScreenState extends State<SpeakingActivityScreen> {
           isExpanded: true,
           decoration: InputDecoration(
             filled: true,
-            fillColor: Colors.white,
+            fillColor: Theme.of(context).colorScheme.surface,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
           items: categories
@@ -599,7 +610,7 @@ class _SpeakingActivityScreenState extends State<SpeakingActivityScreen> {
   Widget _wordChip(String label) => Chip(
         label: Text(label),
         backgroundColor: _leaf.withValues(alpha: 0.12),
-        labelStyle: const TextStyle(color: _green),
+        labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         side: BorderSide.none,
       );
 
@@ -632,10 +643,10 @@ class _SpeakingActivityScreenState extends State<SpeakingActivityScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _green,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: _green,
-        foregroundColor: const Color(0xFFFDFBF7),
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
         title: Text(widget.featureTitle),
       ),

@@ -1,9 +1,21 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'auth_wrapper.dart';
 import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final Stream<User?>? authStateChanges;
+  final Future<bool>? firebaseInitialization;
+  final Duration minimumDuration;
+
+  const SplashScreen({
+    super.key,
+    this.authStateChanges,
+    this.firebaseInitialization,
+    this.minimumDuration = const Duration(milliseconds: 2500),
+  });
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -12,12 +24,14 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> {
   bool _showContent = false;
   Timer? _fadeTimer;
+  late final Future<Stream<User?>?> _authStreamFuture;
   Timer? _redirectTimer;
 
   @override
   void initState() {
     super.initState();
 
+    _authStreamFuture = _initializeAuth();
     _fadeTimer = Timer(const Duration(milliseconds: 300), () {
       if (mounted) {
         setState(() {
@@ -25,21 +39,53 @@ class _SplashScreenState extends State<SplashScreen> {
         });
       }
     });
+    _redirectTimer = Timer(widget.minimumDuration, _navigateToAuth);
+  }
 
-    _redirectTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const LoginScreen(),
-            transitionsBuilder: (_, animation, __, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            transitionDuration: const Duration(milliseconds: 600),
-          ),
-        );
+  Future<Stream<User?>?> _initializeAuth() async {
+    if (widget.authStateChanges != null) return widget.authStateChanges;
+
+    final firebaseInitialized = await (widget.firebaseInitialization ??
+        _initializeFirebaseForStandaloneUse());
+    if (!firebaseInitialized) return null;
+
+    try {
+      return FirebaseAuth.instance.userChanges();
+    } on Object catch (error, stackTrace) {
+      debugPrint('Firebase Auth is unavailable: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      return null;
+    }
+  }
+
+  Future<bool> _initializeFirebaseForStandaloneUse() async {
+    try {
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp().timeout(const Duration(seconds: 8));
       }
-    });
+      return true;
+    } on Object catch (error, stackTrace) {
+      debugPrint('Firebase initialization failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      return false;
+    }
+  }
+
+  Future<void> _navigateToAuth() async {
+    final authStateChanges = await _authStreamFuture;
+    if (!mounted) return;
+
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder<void>(
+        pageBuilder: (_, animation, secondaryAnimation) =>
+            authStateChanges == null
+                ? const LoginScreen()
+                : AuthWrapper(authStateChanges: authStateChanges),
+        transitionsBuilder: (_, animation, secondaryAnimation, child) =>
+            FadeTransition(opacity: animation, child: child),
+        transitionDuration: const Duration(milliseconds: 500),
+      ),
+    );
   }
 
   @override
@@ -51,8 +97,10 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0F3822),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -74,7 +122,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       borderRadius: BorderRadius.circular(32),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF3E8E55).withValues(alpha: 0.4),
+                          color: colors.primary.withValues(alpha: 0.4),
                           blurRadius: 40,
                           spreadRadius: 8,
                         ),
@@ -89,32 +137,30 @@ class _SplashScreenState extends State<SplashScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     'Fluent',
                     style: TextStyle(
-                      color: Color(0xFFFDFBF7),
+                      color: colors.onSurface,
                       fontSize: 36,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 2,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Learn. Speak. Thrive.',
                     style: TextStyle(
-                      color: Color(0xFF3E8E55),
+                      color: colors.primary,
                       fontSize: 14,
                       letterSpacing: 1.2,
                     ),
                   ),
                   const SizedBox(height: 40),
-                  const SizedBox(
+                  SizedBox(
                     width: 28,
                     height: 28,
                     child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Color(0xFFFDFBF7),
-                      ),
+                      valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
                       strokeWidth: 2.5,
                     ),
                   ),

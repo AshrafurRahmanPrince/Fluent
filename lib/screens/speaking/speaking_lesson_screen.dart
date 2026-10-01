@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluento/data/speaking_content.dart';
 import 'package:fluento/models/learning_models.dart';
 import 'package:fluento/models/speaking_models.dart';
-
-const _lessonGreen = Color(0xFF0F3822);
-const _lessonCream = Color(0xFFF7F3E9);
-const _lessonLeaf = Color(0xFF3E8E55);
-const _lessonCharcoal = Color(0xFF1C2A23);
+import '../../services/user_progress_service.dart';
 
 class SpeakingLessonScreen extends StatefulWidget {
   const SpeakingLessonScreen({required this.lesson, super.key});
@@ -28,6 +24,11 @@ class _SpeakingLessonScreenState extends State<SpeakingLessonScreen> {
   bool _practiceRecording = false;
   bool _challengeRecording = false;
   bool _lessonCompleted = false;
+
+  Color get _lessonGreen => Theme.of(context).scaffoldBackgroundColor;
+  Color get _lessonCream => Theme.of(context).colorScheme.surface;
+  Color get _lessonLeaf => Theme.of(context).colorScheme.primary;
+  Color get _lessonCharcoal => Theme.of(context).colorScheme.onSurface;
 
   SpeakingLessonContent get _content =>
       speakingLessonContent[widget.lesson.title]!;
@@ -57,7 +58,7 @@ class _SpeakingLessonScreenState extends State<SpeakingLessonScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
-              style: const TextStyle(
+              style: TextStyle(
                   color: _lessonCharcoal,
                   fontSize: 17,
                   fontWeight: FontWeight.bold)),
@@ -84,7 +85,7 @@ class _SpeakingLessonScreenState extends State<SpeakingLessonScreen> {
         decoration: InputDecoration(
           hintText: hint,
           filled: true,
-          fillColor: Colors.white,
+          fillColor: Theme.of(context).colorScheme.surface,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
@@ -99,7 +100,7 @@ class _SpeakingLessonScreenState extends State<SpeakingLessonScreen> {
         label: Text(title),
         style: ElevatedButton.styleFrom(
           backgroundColor: _lessonLeaf,
-          foregroundColor: Colors.white,
+          foregroundColor: Theme.of(context).colorScheme.onPrimary,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -115,8 +116,12 @@ class _SpeakingLessonScreenState extends State<SpeakingLessonScreen> {
     });
   }
 
-  void _finishLesson() {
+  Future<void> _finishLesson() async {
     setState(() => _lessonCompleted = true);
+    await UserProgressService.instance.logDailyActivity(
+      activityType: 'speaking_lesson',
+    );
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Speaking lesson completed. Well done!')),
     );
@@ -132,7 +137,7 @@ class _SpeakingLessonScreenState extends State<SpeakingLessonScreen> {
       backgroundColor: _lessonGreen,
       appBar: AppBar(
         backgroundColor: _lessonGreen,
-        foregroundColor: const Color(0xFFFDFBF7),
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
         title: Text(widget.lesson.title),
       ),
@@ -159,8 +164,7 @@ class _SpeakingLessonScreenState extends State<SpeakingLessonScreen> {
                     value: progress,
                     minHeight: 9,
                     backgroundColor: _lessonGreen.withValues(alpha: 0.12),
-                    valueColor:
-                        const AlwaysStoppedAnimation<Color>(_lessonLeaf),
+                    valueColor: AlwaysStoppedAnimation<Color>(_lessonLeaf),
                   ),
                 ),
               ]),
@@ -170,7 +174,7 @@ class _SpeakingLessonScreenState extends State<SpeakingLessonScreen> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.check_circle_rounded,
+                          Icon(Icons.check_circle_rounded,
                               color: _lessonLeaf, size: 19),
                           const SizedBox(width: 8),
                           Expanded(child: _text(objective)),
@@ -187,7 +191,7 @@ class _SpeakingLessonScreenState extends State<SpeakingLessonScreen> {
                             label: Text(word),
                             backgroundColor:
                                 _lessonLeaf.withValues(alpha: 0.12),
-                            labelStyle: const TextStyle(color: _lessonGreen),
+                            labelStyle: TextStyle(color: _lessonCharcoal),
                             side: BorderSide.none,
                           ))
                       .toList(),
@@ -302,7 +306,7 @@ class _SpeakingLessonScreenState extends State<SpeakingLessonScreen> {
                           : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _lessonLeaf,
-                    foregroundColor: Colors.white,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14)),
@@ -335,8 +339,8 @@ class _SpeakingLessonScreenState extends State<SpeakingLessonScreen> {
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(label,
-            style: const TextStyle(
-                color: _lessonGreen,
+            style: TextStyle(
+                color: _lessonCharcoal,
                 fontSize: 12,
                 fontWeight: FontWeight.w600)),
       );

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fluento/data/ielts_reading_tests.dart';
 import 'package:fluento/screens/reading/reading_experience_screen.dart';
+import 'package:fluento/screens/reading/ielts_reading_test_screen.dart';
 import 'package:fluento/screens/reading/reading_screen.dart';
+import 'package:fluento/services/user_progress_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -9,43 +12,27 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('every Reading skill opens its learning page', (tester) async {
-    const skills = {
-      'Vocabulary Builder': 'Choose a category and word',
-      'Reading Comprehension': 'Choose your level',
-      'Skimming Practice': 'How to skim',
-      'Scanning Practice': 'How to scan',
-      'Grammar in Reading': 'Grammar topic',
-      'Daily Reading': 'Today’s reading',
-    };
-
+  testWidgets('Reading module lists only IELTS Academic and General tests',
+      (tester) async {
     await tester.pumpWidget(const MaterialApp(home: ReadingScreen()));
 
-    for (final entry in skills.entries) {
-      final skillCard = find.text(entry.key).first;
-      await tester.ensureVisible(skillCard);
-      await tester.pumpAndSettle();
-      await tester.tap(skillCard);
-      await tester.pumpAndSettle();
-
-      expect(find.text(entry.key), findsWidgets);
-      expect(find.text(entry.value), findsOneWidget);
-      expect(tester.takeException(), isNull);
-
-      await tester.pageBack();
-      await tester.pumpAndSettle();
-    }
+    expect(find.text('Academic Reading'), findsOneWidget);
+    expect(find.text('General Training Reading'), findsOneWidget);
+    expect(find.text('Academic Reading Test 1'), findsOneWidget);
+    expect(find.text('General Training Reading Test 1'), findsOneWidget);
+    expect(find.text('Vocabulary Builder'), findsNothing);
+    expect(find.text('Skimming Practice'), findsNothing);
   });
 
   testWidgets('every Reading lesson opens a passage and questions',
       (tester) async {
     const lessonTitles = [
-      'Daily Life',
-      'Travel',
-      'Education',
-      'Technology',
-      'Environment',
-      'Communication',
+      'Academic Reading Test 1',
+      'Academic Reading Test 2',
+      'Academic Reading Test 3',
+      'General Training Reading Test 1',
+      'General Training Reading Test 2',
+      'General Training Reading Test 3',
     ];
 
     await tester.pumpWidget(const MaterialApp(home: ReadingScreen()));
@@ -57,10 +44,13 @@ void main() {
       await tester.tap(lessonCard);
       await tester.pumpAndSettle();
 
-      expect(find.text('Reading Lesson'), findsOneWidget);
-      expect(find.text('Reading passage'), findsOneWidget);
-      expect(find.text('Comprehension questions'), findsOneWidget);
-      expect(find.text('Mark lesson complete'), findsOneWidget);
+      expect(find.text('Full reading passage'), findsOneWidget);
+      await tester.drag(find.byType(ListView).last, const Offset(0, -700));
+      await tester.pumpAndSettle();
+      expect(find.text(title), findsWidgets);
+      expect(find.text('Questions 1-3'), findsOneWidget);
+      expect(find.text('Questions 4-6'), findsOneWidget);
+      expect(find.text('Submit IELTS Reading Test'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       await tester.pageBack();
@@ -212,49 +202,71 @@ void main() {
     expect(find.text('Daily Reading Streak: 1 day'), findsOneWidget);
   });
 
-  testWidgets(
-      'completed lesson remains completed after returning and reopening',
+  testWidgets('IELTS Reading validates all question types and records a score',
       (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: ReadingScreen()));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: IELTSReadingTestScreen(test: ieltsReadingTests.first),
+      ),
+    );
 
-    final dailyLifeCard = find.text('Daily Life').last;
-    await tester.ensureVisible(dailyLifeCard);
+    expect(find.text('How University Libraries Are Changing'), findsOneWidget);
+    expect(find.text('Full reading passage'), findsOneWidget);
+    await tester.drag(find.byType(ListView).last, const Offset(0, -700));
     await tester.pumpAndSettle();
-    await tester.tap(dailyLifeCard);
+    final firstSection = find.text('Questions 1-3');
+    await tester.ensureVisible(firstSection);
     await tester.pumpAndSettle();
+    expect(find.byType(TextField), findsOneWidget);
 
-    const answers = [
-      'Mina’s daily routine',
-      'She prepares breakfast and packs her books.',
-      'True',
-      'In the morning',
+    const answerInteractions = [
+      ('They have changed research practices but have not removed other library functions.', false),
+      ('FALSE', false),
+      ('peer reviewed', true),
+      ('perspectives', true),
+      ('Licensing agreements may limit use.', false),
+      ('NOT GIVEN', false),
     ];
-    for (var index = 0; index < answers.length; index++) {
-      final answer = find.text(answers[index]).last;
-      await tester.ensureVisible(answer);
-      await tester.tap(answer);
+    var completionFieldIndex = 0;
+    for (var questionIndex = 0;
+        questionIndex < answerInteractions.length;
+        questionIndex++) {
+      final (answer, isTextEntry) = answerInteractions[questionIndex];
+      if (questionIndex == 3) {
+        await tester.drag(find.byType(ListView).last, const Offset(0, -700));
+        await tester.pumpAndSettle();
+      }
+      if (isTextEntry) {
+        completionFieldIndex++;
+        final field = find.byKey(ValueKey('reading-answer-$questionIndex'));
+        await tester.ensureVisible(field);
+        await tester.enterText(field, answer);
+      } else {
+        final option = find.text(answer).last;
+        await tester.ensureVisible(option);
+        await tester.tap(option);
+      }
       await tester.pumpAndSettle();
 
-      final checkButton =
-          find.widgetWithText(ElevatedButton, 'Check answer').at(index);
+      final checkButton = find.text('Check answer').at(questionIndex);
       await tester.ensureVisible(checkButton);
       await tester.tap(checkButton);
       await tester.pumpAndSettle();
+      expect(find.text('Correct').at(questionIndex), findsOneWidget);
     }
 
-    final completeButton =
-        find.widgetWithText(ElevatedButton, 'Mark lesson complete');
-    await tester.ensureVisible(completeButton);
-    await tester.tap(completeButton);
+    final submitButton = find.text('Submit IELTS Reading Test');
+    await tester.ensureVisible(submitButton);
+    await tester.tap(submitButton);
     await tester.pumpAndSettle();
-    expect(find.text('✓ Completed'), findsOneWidget);
 
-    await tester.pumpWidget(const MaterialApp(home: ReadingScreen()));
-    await tester.pumpAndSettle();
-    expect(find.text('✓ Completed'), findsOneWidget);
+    expect(find.text('Score: 6 / 6 correct  ·  6 / 6 checked'), findsOneWidget);
+    expect(find.text('Back to reading tests'), findsOneWidget);
+    final progress = await UserProgressService.instance.getProfileProgress();
+    expect(progress.completedLessons, 1);
   });
 
-  testWidgets('Reading skills and lessons fit a mobile viewport',
+  testWidgets('IELTS reading tests fit a mobile viewport',
       (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
@@ -263,18 +275,12 @@ void main() {
 
     await tester.pumpWidget(const MaterialApp(home: ReadingScreen()));
     const readingItems = [
-      'Vocabulary Builder',
-      'Reading Comprehension',
-      'Skimming Practice',
-      'Scanning Practice',
-      'Grammar in Reading',
-      'Daily Reading',
-      'Daily Life',
-      'Travel',
-      'Education',
-      'Technology',
-      'Environment',
-      'Communication',
+      'Academic Reading Test 1',
+      'Academic Reading Test 2',
+      'Academic Reading Test 3',
+      'General Training Reading Test 1',
+      'General Training Reading Test 2',
+      'General Training Reading Test 3',
     ];
 
     for (final title in readingItems) {
@@ -284,7 +290,7 @@ void main() {
       await tester.tap(item);
       await tester.pumpAndSettle();
 
-      final pageScroll = find.byType(SingleChildScrollView).last;
+      final pageScroll = find.byType(ListView).last;
       await tester.drag(pageScroll, const Offset(0, -900));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull,
@@ -295,7 +301,7 @@ void main() {
     }
   });
 
-  testWidgets('Vocabulary Builder fits a mobile viewport when opened directly',
+  testWidgets('IELTS Reading passage fits a mobile viewport when opened directly',
       (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
@@ -303,8 +309,8 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      const MaterialApp(
-        home: ReadingExperienceScreen(skillTitle: 'Vocabulary Builder'),
+      MaterialApp(
+        home: IELTSReadingTestScreen(test: ieltsReadingTests.first),
       ),
     );
     await tester.pumpAndSettle();

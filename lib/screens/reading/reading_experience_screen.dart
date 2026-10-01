@@ -5,13 +5,24 @@ import 'package:fluento/data/reading_data.dart';
 import 'package:fluento/models/learning_models.dart';
 import 'package:fluento/models/reading_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/user_progress_service.dart';
 
 class ReadingExperienceScreen extends StatefulWidget {
-  const ReadingExperienceScreen({this.skillTitle, this.lesson, super.key})
-      : assert(skillTitle != null || lesson != null);
+  const ReadingExperienceScreen({
+    this.skillTitle,
+    this.lesson,
+    this.ieltsTest,
+    super.key,
+  }) : assert(
+          (skillTitle != null ? 1 : 0) +
+                  (lesson != null ? 1 : 0) +
+                  (ieltsTest != null ? 1 : 0) ==
+              1,
+        );
 
   final String? skillTitle;
   final Lesson? lesson;
+  final IELTSReadingTest? ieltsTest;
 
   @override
   State<ReadingExperienceScreen> createState() =>
@@ -19,10 +30,10 @@ class ReadingExperienceScreen extends StatefulWidget {
 }
 
 class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
-  static const _forest = Color(0xFF0F3822);
-  static const _cream = Color(0xFFF7F3E9);
-  static const _leaf = Color(0xFF3E8E55);
-  static const _ink = Color(0xFF1C2A23);
+  Color get _forest => Theme.of(context).scaffoldBackgroundColor;
+  Color get _cream => Theme.of(context).colorScheme.surface;
+  Color get _leaf => Theme.of(context).colorScheme.primary;
+  Color get _ink => Theme.of(context).colorScheme.onSurface;
 
   final Map<String, String> _answers = {};
   final Map<String, bool> _checked = {};
@@ -37,6 +48,8 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
   String _fillFeedback = '';
   String _dailyFeedback = '';
   bool _dailyComplete = false;
+  bool _dailyCompletionInProgress = false;
+  bool _lessonCompletionInProgress = false;
   bool _challengeStarted = false;
   bool _skimReadyToAnswer = false;
   int _secondsLeft = 30;
@@ -44,9 +57,12 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
   Timer? _challengeTimer;
 
   bool get _isLesson => widget.lesson != null;
-  String get _title => widget.lesson?.title ?? widget.skillTitle!;
+  bool get _isIELTSTest => widget.ieltsTest != null;
+  String get _title =>
+      widget.ieltsTest?.title ?? widget.lesson?.title ?? widget.skillTitle!;
 
   ReadingPassage get _passage {
+    if (_isIELTSTest) return widget.ieltsTest!.passage;
     if (_isLesson) return readingLessonsByTitle[widget.lesson!.title]!;
     switch (widget.skillTitle) {
       case 'Reading Comprehension':
@@ -64,9 +80,12 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
     }
   }
 
-  List<ReadingQuestion> get _questions => widget.skillTitle == 'Daily Reading'
-      ? _passage.questions.take(3).toList()
-      : _passage.questions;
+  List<ReadingQuestion> get _questions {
+    if (_isIELTSTest) return widget.ieltsTest!.questions;
+    return widget.skillTitle == 'Daily Reading'
+        ? _passage.questions.take(3).toList()
+        : _passage.questions;
+  }
 
   @override
   void initState() {
@@ -98,15 +117,24 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
       _questions.isNotEmpty &&
       _questions.asMap().entries.every(
             (entry) =>
-                _checked[_questionKey(
-                  entry.key,
-                  widget.skillTitle == 'Daily Reading' ? 'daily' : null,
-                )] ==
-                true,
+                _checked[_answerKey(entry.key)] == true,
           );
 
+  bool get _allQuestionsChecked =>
+      _questions.isNotEmpty &&
+      _questions.asMap().entries.every(
+            (entry) => _checked.containsKey(_answerKey(entry.key)),
+          );
+
+  int get _correctAnswerCount => _checked.values.where((correct) => correct).length;
+
+  String _answerKey(int index) => _questionKey(
+        index,
+        widget.skillTitle == 'Daily Reading' ? 'daily' : null,
+      );
+
   String _questionKey(int index, [String? prefix]) =>
-      '${prefix ?? _passage.title}_$index';
+      '${prefix ?? widget.ieltsTest?.title ?? _passage.title}_$index';
 
   void _selectAnswer(String key, String answer) {
     setState(() {
@@ -117,7 +145,9 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
 
   void _checkQuestion(ReadingQuestion question, String key) {
     if (_answers[key] == null) return;
-    setState(() => _checked[key] = _answers[key] == question.answer);
+    final selected = _answers[key]!.trim().toLowerCase();
+    final answer = question.answer.trim().toLowerCase();
+    setState(() => _checked[key] = selected == answer);
   }
 
   void _startSkimmingChallenge() {
@@ -149,46 +179,72 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
   }
 
   Future<void> _completeDailyReading() async {
-    final preferences = await SharedPreferences.getInstance();
-    final now = DateTime.now();
-    final today = _dateKey(now);
-    final lastDate = preferences.getString('reading_daily_date');
-    final yesterday = _dateKey(now.subtract(const Duration(days: 1)));
-    var streak = preferences.getInt('reading_daily_streak') ?? 0;
+    if (_dailyComplete || _dailyCompletionInProgress) return;
+    _dailyCompletionInProgress = true;
 
-    if (lastDate != today) {
-      streak = lastDate == yesterday ? streak + 1 : 1;
-      await preferences.setInt('reading_daily_streak', streak);
-      await preferences.setString('reading_daily_date', today);
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      final now = DateTime.now();
+      final today = _dateKey(now);
+      final lastDate = preferences.getString('reading_daily_date');
+      final yesterday = _dateKey(now.subtract(const Duration(days: 1)));
+      var streak = preferences.getInt('reading_daily_streak') ?? 0;
+
+      if (lastDate != today) {
+        streak = lastDate == yesterday ? streak + 1 : 1;
+        await preferences.setInt('reading_daily_streak', streak);
+        await preferences.setString('reading_daily_date', today);
+        await UserProgressService.instance.logDailyActivity(
+          activityType: 'reading_passage',
+        );
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _dailyComplete = true;
+        _dailyStreak = streak;
+        _dailyFeedback = 'Reading completed. Well done!';
+      });
+    } finally {
+      _dailyCompletionInProgress = false;
     }
-
-    if (!mounted) return;
-    setState(() {
-      _dailyComplete = true;
-      _dailyStreak = streak;
-      _dailyFeedback = 'Reading completed. Well done!';
-    });
   }
 
-  void _completeLesson() => Navigator.pop(context, true);
+  Future<void> _completeLesson() async {
+    if (_lessonCompletionInProgress) return;
+    _lessonCompletionInProgress = true;
+    try {
+      await UserProgressService.instance.logDailyActivity(
+        activityType: _isIELTSTest ? 'reading_test' : 'reading_passage',
+      );
+    } finally {
+      _lessonCompletionInProgress = false;
+      if (mounted) Navigator.pop(context, true);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final passage = _passage;
+    final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
       backgroundColor: _forest,
       appBar: AppBar(
         backgroundColor: _forest,
-        foregroundColor: Colors.white,
+        foregroundColor: colors.onSurface,
         elevation: 0,
         title: Row(
           children: [
-            const Icon(Icons.menu_book_rounded, color: _leaf),
+            Icon(Icons.menu_book_rounded, color: _leaf),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                _isLesson ? 'Reading Lesson' : 'Reading',
+                _isIELTSTest
+                    ? widget.ieltsTest!.title
+                    : _isLesson
+                        ? 'Reading Lesson'
+                        : 'Reading',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -204,8 +260,12 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
             children: [
               _buildIntro(passage),
               const SizedBox(height: 18),
-              if (_isLesson) ..._buildLesson(passage),
-              if (!_isLesson) ..._buildSkill(passage),
+              if (_isIELTSTest)
+                ..._buildIELTSTest(widget.ieltsTest!)
+              else if (_isLesson)
+                ..._buildLesson(passage)
+              else
+                ..._buildSkill(passage),
             ],
           ),
         ),
@@ -233,7 +293,7 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(_isLesson ? widget.lesson!.title : _title,
-              style: const TextStyle(
+              style: TextStyle(
                   color: _ink, fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
           Text(
@@ -252,12 +312,14 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
             children: [
               _infoChip(passage.level),
               _infoChip('${passage.minutes} min'),
+              if (_isIELTSTest)
+                _infoChip(widget.ieltsTest!.category.label),
               if (_isLesson) _infoChip('${passage.words.length} new words'),
             ],
           ),
           if (_isLesson) ...[
             const SizedBox(height: 14),
-            const Text('Lesson progress',
+            Text('Lesson progress',
                 style: TextStyle(color: _ink, fontWeight: FontWeight.w600)),
             const SizedBox(height: 7),
             ClipRRect(
@@ -267,7 +329,7 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
                     passage.questions.length,
                 minHeight: 8,
                 backgroundColor: _forest.withValues(alpha: 0.12),
-                valueColor: const AlwaysStoppedAnimation<Color>(_leaf),
+                valueColor: AlwaysStoppedAnimation<Color>(_leaf),
               ),
             ),
           ],
@@ -280,8 +342,7 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
         label: Text(label),
         visualDensity: VisualDensity.compact,
         backgroundColor: _leaf.withValues(alpha: 0.12),
-        labelStyle:
-            const TextStyle(color: _forest, fontWeight: FontWeight.w600),
+        labelStyle: TextStyle(color: _ink, fontWeight: FontWeight.w600),
         side: BorderSide.none,
       );
 
@@ -312,6 +373,34 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
           for (final word in passage.words) _vocabularyCard(word),
         ]),
         _section('Comprehension questions', _buildQuestions(passage.questions)),
+        _buildCompletionButton(),
+      ];
+
+  List<Widget> _buildIELTSTest(IELTSReadingTest test) => [
+        _section('Full reading passage', [_passageCard(test.passage)]),
+        for (final section in test.sections)
+          _section(section.title, [
+            Material(
+              color: _cream,
+              child: ExpansionTile(
+                initiallyExpanded: true,
+                title: Text('Question set (${section.questions.length} items)'),
+                children: [
+                  for (final question in section.questions)
+                    _questionCard(
+                      question,
+                      _questionKey(_questions.indexOf(question)),
+                    ),
+                ],
+              ),
+            ),
+          ]),
+        _section('Your score', [
+          Text(
+            '$_correctAnswerCount / ${_questions.length} correct',
+            style: TextStyle(color: _ink, fontWeight: FontWeight.w600),
+          ),
+        ]),
         _buildCompletionButton(),
       ];
 
@@ -399,7 +488,7 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
           'Multiple choice', _buildQuestions([mcq], keyPrefix: 'vocabulary')),
       _section('Fill in the blank', [
         Text(blankSentence,
-            style: const TextStyle(color: _ink, fontSize: 16, height: 1.6)),
+            style: TextStyle(color: _ink, fontSize: 16, height: 1.6)),
         const SizedBox(height: 10),
         TextField(
           controller: _fillController,
@@ -414,7 +503,7 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
       ]),
       _section('Match word and meaning', [
         Text('Choose the meaning of “${selectedWord.word}”.',
-            style: const TextStyle(color: _ink, fontSize: 16)),
+            style: TextStyle(color: _ink, fontSize: 16)),
         const SizedBox(height: 10),
         DropdownButtonFormField<String>(
           initialValue: _matchedMeaning,
@@ -490,7 +579,7 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
 
   List<Widget> _buildSkimming(ReadingPassage passage) => [
         _section('How to skim', [
-          const Text(
+          Text(
               'Skimming means reading quickly for the main idea, not every word.',
               style: TextStyle(color: _ink, height: 1.5)),
           const SizedBox(height: 10),
@@ -502,7 +591,7 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
         _section('Main idea',
             _buildQuestions(passage.questions, keyPrefix: 'skim_example')),
         _section('30-second challenge', [
-          const Text(
+          Text(
               'Skim the passage, then choose its main idea. You can answer even if the timer ends.',
               style: TextStyle(color: _ink, height: 1.5)),
           const SizedBox(height: 10),
@@ -515,10 +604,8 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
                       : _skimReadyToAnswer
                           ? 'Passage read. Answer when ready.'
                           : '$_secondsLeft seconds',
-                  style: const TextStyle(
-                      color: _forest,
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      color: _ink, fontSize: 17, fontWeight: FontWeight.bold),
                 ),
               ),
               OutlinedButton.icon(
@@ -548,7 +635,7 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
 
   List<Widget> _buildScanning(ReadingPassage passage) => [
         _section('How to scan', [
-          const Text(
+          Text(
               'Scanning means moving your eyes quickly to find one exact fact.',
               style: TextStyle(color: _ink, height: 1.5)),
           const SizedBox(height: 10),
@@ -607,7 +694,7 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
         _highlightedPassage(passage.text, highlights[_grammarTopic]!),
         const SizedBox(height: 12),
         Text(explanations[_grammarTopic]!,
-            style: const TextStyle(color: _ink, height: 1.6)),
+            style: TextStyle(color: _ink, height: 1.6)),
       ]),
       _section('Practice in context', _buildQuestions(passage.questions)),
     ];
@@ -615,11 +702,11 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
 
   List<Widget> _buildDailyReading(ReadingPassage passage) => [
         _section('Today’s reading', [
-          const Text('Morning at the University',
+          Text('Morning at the University',
               style: TextStyle(
                   color: _ink, fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
-          const Text('Beginner  ·  5 min  ·  5 new words',
+          Text('Beginner  ·  5 min  ·  5 new words',
               style: TextStyle(color: _ink)),
           const SizedBox(height: 12),
           _passageCard(passage),
@@ -635,14 +722,14 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
               _dailyComplete
                   ? '✓ Reading completed'
                   : 'Answer all questions correctly to complete today’s reading.',
-              style: const TextStyle(
+              style: TextStyle(
                   color: _ink, fontWeight: FontWeight.w600, height: 1.5)),
           const SizedBox(height: 8),
           Text(
               _dailyStreak == 0
                   ? 'Complete a reading today to start your streak.'
                   : 'Daily Reading Streak: $_dailyStreak ${_dailyStreak == 1 ? 'day' : 'days'}',
-              style: const TextStyle(color: _ink)),
+              style: TextStyle(color: _ink)),
           if (_dailyFeedback.isNotEmpty) _feedback(_dailyFeedback, true),
           if (!_dailyComplete) ...[
             const SizedBox(height: 10),
@@ -664,51 +751,67 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
 
   Widget _questionCard(ReadingQuestion question, String key) {
     final checked = _checked[key];
+    final isCompletion =
+      question.type == IELTSReadingQuestionType.sentenceCompletion ||
+        question.type == IELTSReadingQuestionType.summaryCompletion;
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(question.prompt,
-              style: const TextStyle(
+              style: TextStyle(
                   color: _ink,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   height: 1.45)),
           const SizedBox(height: 8),
-          RadioGroup<String>(
-            groupValue: _answers[key],
-            onChanged: (value) {
-              if (value != null) _selectAnswer(key, value);
-            },
-            child: Material(
-              color: Colors.transparent,
-              child: SizedBox(
-                width: double.infinity,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (final option in question.options)
-                      InkWell(
-                        onTap: () => _selectAnswer(key, option),
-                        child: Row(
-                          children: [
-                            Radio<String>(value: option, activeColor: _leaf),
-                            Expanded(
-                              child: Text(
-                                option,
-                                style:
-                                    const TextStyle(color: _ink, height: 1.35),
+          if (isCompletion)
+            TextField(
+              key: ValueKey(key),
+              onChanged: (value) => setState(() {
+                _answers[key] = value;
+                _checked.remove(key);
+              }),
+              decoration: _inputDecoration(
+                question.type == IELTSReadingQuestionType.summaryCompletion
+                    ? 'Complete the summary'
+                    : 'Complete the sentence',
+              ),
+            )
+          else
+            RadioGroup<String>(
+              groupValue: _answers[key],
+              onChanged: (value) {
+                if (value != null) _selectAnswer(key, value);
+              },
+              child: Material(
+                color: Colors.transparent,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final option in question.options)
+                        InkWell(
+                          onTap: () => _selectAnswer(key, option),
+                          child: Row(
+                            children: [
+                              Radio<String>(value: option, activeColor: _leaf),
+                              Expanded(
+                                child: Text(
+                                  option,
+                                  style: TextStyle(color: _ink, height: 1.35),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
           ElevatedButton(
             onPressed: _answers[key] == null
                 ? null
@@ -720,7 +823,7 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 6),
               child: Text(question.explanation,
-                  style: const TextStyle(color: _ink, height: 1.5)),
+                  style: TextStyle(color: _ink, height: 1.5)),
             ),
           ],
         ],
@@ -738,7 +841,7 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(title,
-                style: const TextStyle(
+                style: TextStyle(
                     color: _ink, fontSize: 17, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             ...children,
@@ -750,12 +853,12 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
         width: double.infinity,
         padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
-            color: Colors.white, borderRadius: BorderRadius.circular(10)),
+            color: _cream, borderRadius: BorderRadius.circular(10)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(passage.title,
-                style: const TextStyle(
+                style: TextStyle(
                     color: _ink, fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             _highlightedPassage(
@@ -767,7 +870,7 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
   Widget _highlightedPassage(String text, List<String> words) {
     if (words.isEmpty) {
       return Text(text,
-          style: const TextStyle(color: _ink, fontSize: 16, height: 1.65));
+          style: TextStyle(color: _ink, fontSize: 16, height: 1.65));
     }
     final pattern =
         RegExp('(${words.map(RegExp.escape).join('|')})', caseSensitive: false);
@@ -789,7 +892,7 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
       spans.add(TextSpan(text: text.substring(lastEnd)));
     }
     return Text.rich(TextSpan(children: spans),
-        style: const TextStyle(color: _ink, fontSize: 16, height: 1.65));
+        style: TextStyle(color: _ink, fontSize: 16, height: 1.65));
   }
 
   Widget _vocabularyCard(ReadingWord word) => Container(
@@ -797,24 +900,22 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-            color: Colors.white, borderRadius: BorderRadius.circular(10)),
+            color: _cream, borderRadius: BorderRadius.circular(10)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(word.word,
-                style: const TextStyle(
+                style: TextStyle(
                     color: _forest, fontSize: 17, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            Text(word.meaning,
-                style: const TextStyle(color: _ink, height: 1.45)),
+            Text(word.meaning, style: TextStyle(color: _ink, height: 1.45)),
             const SizedBox(height: 4),
             Text('Part of speech: ${word.partOfSpeech}',
                 style: TextStyle(color: _ink.withValues(alpha: 0.75))),
             Text('Example: ${word.example}',
-                style: const TextStyle(color: _ink, height: 1.45)),
+                style: TextStyle(color: _ink, height: 1.45)),
             if (word.synonym != null)
-              Text('Synonym: ${word.synonym}',
-                  style: const TextStyle(color: _ink)),
+              Text('Synonym: ${word.synonym}', style: TextStyle(color: _ink)),
           ],
         ),
       );
@@ -824,12 +925,10 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.check_circle_outline_rounded,
-                size: 18, color: _leaf),
+            Icon(Icons.check_circle_outline_rounded, size: 18, color: _leaf),
             const SizedBox(width: 8),
             Expanded(
-                child: Text(text,
-                    style: const TextStyle(color: _ink, height: 1.45))),
+                child: Text(text, style: TextStyle(color: _ink, height: 1.45))),
           ],
         ),
       );
@@ -843,28 +942,32 @@ class _ReadingExperienceScreenState extends State<ReadingExperienceScreen> {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(text,
-            style: const TextStyle(
+            style: TextStyle(
                 color: _ink, fontWeight: FontWeight.w600, height: 1.4)),
       );
 
   InputDecoration _inputDecoration(String label) => InputDecoration(
         labelText: label,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: _cream,
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide.none),
       );
 
-  Widget _buildCompletionButton() => Padding(
+  Widget _buildCompletionButton() {
+    final canComplete =
+        _isIELTSTest ? _allQuestionsChecked : _allQuestionsCorrect;
+    return Padding(
         padding: const EdgeInsets.only(top: 2),
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: _allQuestionsCorrect ? _completeLesson : null,
+            onPressed: canComplete ? _completeLesson : null,
             icon: const Icon(Icons.check_circle_outline_rounded),
-            label: const Text('Mark lesson complete'),
+            label: Text(_isIELTSTest ? 'Complete IELTS test' : 'Mark lesson complete'),
           ),
         ),
       );
+  }
 }

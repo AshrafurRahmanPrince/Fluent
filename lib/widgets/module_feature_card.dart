@@ -13,8 +13,9 @@ class ModuleFeatureCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Material(
-      color: const Color(0xFFF7F3E9),
+      color: colors.surface,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
@@ -28,11 +29,10 @@ class ModuleFeatureCard extends StatelessWidget {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3E8E55).withValues(alpha: 0.12),
+                  color: colors.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(feature.icon,
-                    color: const Color(0xFF3E8E55), size: 24),
+                child: Icon(feature.icon, color: colors.primary, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -41,8 +41,8 @@ class ModuleFeatureCard extends StatelessWidget {
                   children: [
                     Text(
                       feature.title,
-                      style: const TextStyle(
-                        color: Color(0xFF1C2A23),
+                      style: TextStyle(
+                        color: colors.onSurface,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -51,7 +51,7 @@ class ModuleFeatureCard extends StatelessWidget {
                     Text(
                       feature.description,
                       style: TextStyle(
-                        color: const Color(0xFF1C2A23).withValues(alpha: 0.72),
+                        color: colors.onSurface.withValues(alpha: 0.72),
                         fontSize: 12.5,
                         height: 1.4,
                       ),
@@ -59,11 +59,11 @@ class ModuleFeatureCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.only(top: 6),
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
                 child: Icon(
                   Icons.arrow_forward_rounded,
-                  color: Color(0xFF3E8E55),
+                  color: colors.primary,
                   size: 22,
                 ),
               ),

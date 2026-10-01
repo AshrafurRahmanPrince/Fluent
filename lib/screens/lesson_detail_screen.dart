@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fluento/models/learning_models.dart';
+import '../services/user_progress_service.dart';
 
 class LessonDetailScreen extends StatefulWidget {
   const LessonDetailScreen({required this.lesson, super.key});
@@ -12,6 +13,8 @@ class LessonDetailScreen extends StatefulWidget {
 
 class _LessonDetailScreenState extends State<LessonDetailScreen> {
   bool _lessonCompleted = false;
+  bool _writingProgressInProgress = false;
+  Color get _textColor => Theme.of(context).colorScheme.onSurface;
   final TextEditingController _opinionController = TextEditingController();
   final TextEditingController _storyController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -24,13 +27,41 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     super.dispose();
   }
 
+  Future<void> _toggleLessonCompletion() async {
+    if (_writingProgressInProgress) return;
+    final markComplete = !_lessonCompleted;
+    if (markComplete) _writingProgressInProgress = true;
+    setState(() => _lessonCompleted = markComplete);
+    try {
+      if (markComplete) {
+        await UserProgressService.instance.logDailyActivity(
+          activityType: 'writing_lesson',
+        );
+      }
+    } finally {
+      if (markComplete) _writingProgressInProgress = false;
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          markComplete
+              ? 'Lesson marked as complete.'
+              : 'Lesson marked as incomplete.',
+        ),
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+      ),
+    );
+  }
+
   Widget _buildSectionCard(String title, List<Widget> children) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 18),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F3E9),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
@@ -38,8 +69,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: Color(0xFF1C2A23),
+            style: TextStyle(
+              color: colors.onSurface,
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
@@ -52,18 +83,19 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   }
 
   Widget _buildGoalItem(String text) {
+    final colors = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.check_circle_rounded, color: Color(0xFF3E8E55)),
+          Icon(Icons.check_circle_rounded, color: colors.primary),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                color: Color(0xFFFDFBF7),
+              style: TextStyle(
+                color: colors.onSurface,
                 height: 1.5,
               ),
             ),
@@ -76,19 +108,18 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   List<Widget> _buildSentenceBasicsLesson() {
     return [
       _buildSectionCard('Learning Objective', [
-        const Text('Learn the basic sentence pattern: subject + verb + object.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+        Text('Learn the basic sentence pattern: subject + verb + object.',
+            style: TextStyle(color: _textColor, height: 1.5)),
       ]),
       _buildSectionCard('Explanation', [
-        const Text(
-            'A basic sentence has a subject, a verb, and often an object.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
-        const Text('Example: I eat rice.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+        Text('A basic sentence has a subject, a verb, and often an object.',
+            style: TextStyle(color: _textColor, height: 1.5)),
+        Text('Example: I eat rice.',
+            style: TextStyle(color: _textColor, height: 1.5)),
       ]),
       _buildSectionCard('Practice', [
-        const Text('Write three short sentences using this pattern.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+        Text('Write three short sentences using this pattern.',
+            style: TextStyle(color: _textColor, height: 1.5)),
       ]),
     ];
   }
@@ -96,22 +127,22 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   List<Widget> _buildParagraphLesson() {
     return [
       _buildSectionCard('Learning Objective', [
-        const Text('Learn how to write a clear paragraph.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+        Text('Learn how to write a clear paragraph.',
+            style: TextStyle(color: _textColor, height: 1.5)),
       ]),
       _buildSectionCard('Explanation', [
-        const Text(
+        Text(
             'A paragraph has a topic sentence, details, and a closing sentence.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+            style: TextStyle(color: _textColor, height: 1.5)),
       ]),
       _buildSectionCard('Example', [
-        const Text(
+        Text(
             'My favorite hobby is reading. I read every evening. It helps me relax and learn new words.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.6)),
+            style: TextStyle(color: _textColor, height: 1.6)),
       ]),
       _buildSectionCard('Practice', [
-        const Text('Write 4–5 sentences about your daily routine.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+        Text('Write 4–5 sentences about your daily routine.',
+            style: TextStyle(color: _textColor, height: 1.5)),
       ]),
     ];
   }
@@ -119,19 +150,18 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   List<Widget> _buildDescriptiveLesson() {
     return [
       _buildSectionCard('Learning Objective', [
-        const Text('Use adjectives to describe people, places, and things.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+        Text('Use adjectives to describe people, places, and things.',
+            style: TextStyle(color: _textColor, height: 1.5)),
       ]),
       _buildSectionCard('Explanation', [
-        const Text(
-            'Use words like bright, quiet, modern, friendly, and useful.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
-        const Text('Example: The room is bright and comfortable.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+        Text('Use words like bright, quiet, modern, friendly, and useful.',
+            style: TextStyle(color: _textColor, height: 1.5)),
+        Text('Example: The room is bright and comfortable.',
+            style: TextStyle(color: _textColor, height: 1.5)),
       ]),
       _buildSectionCard('Practice', [
-        const Text('Describe your classroom in 3–4 short sentences.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+        Text('Describe your classroom in 3–4 short sentences.',
+            style: TextStyle(color: _textColor, height: 1.5)),
       ]),
     ];
   }
@@ -139,14 +169,14 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   List<Widget> _buildEmailLesson() {
     return [
       _buildSectionCard('Learning Objective', [
-        const Text('Learn how to write a clear email.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+        Text('Learn how to write a clear email.',
+            style: TextStyle(color: _textColor, height: 1.5)),
       ]),
       _buildSectionCard('Explanation', [
-        const Text('Include a subject, greeting, reason, and closing.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
-        const Text('Formal email: Dear Sir/Madam, ... Yours sincerely.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+        Text('Include a subject, greeting, reason, and closing.',
+            style: TextStyle(color: _textColor, height: 1.5)),
+        Text('Formal email: Dear Sir/Madam, ... Yours sincerely.',
+            style: TextStyle(color: _textColor, height: 1.5)),
       ]),
       _buildSectionCard('Practice', [
         TextField(
@@ -155,7 +185,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           decoration: InputDecoration(
             hintText: 'Write a short email about a leave request...',
             filled: true,
-            fillColor: Colors.white,
+            fillColor: Theme.of(context).colorScheme.surface,
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide.none),
@@ -168,13 +198,13 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   List<Widget> _buildOpinionLesson() {
     return [
       _buildSectionCard('Learning Objective', [
-        const Text('Write a short opinion paragraph.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+        Text('Write a short opinion paragraph.',
+            style: TextStyle(color: _textColor, height: 1.5)),
       ]),
       _buildSectionCard('Explanation', [
-        const Text(
+        Text(
             'Use phrases like: In my opinion, I believe, for example, therefore.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+            style: TextStyle(color: _textColor, height: 1.5)),
       ]),
       _buildSectionCard('Practice', [
         TextField(
@@ -184,7 +214,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             hintText:
                 'Write your opinion about online learning or social media...',
             filled: true,
-            fillColor: Colors.white,
+            fillColor: Theme.of(context).colorScheme.surface,
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide.none),
@@ -197,12 +227,12 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   List<Widget> _buildStoryLesson() {
     return [
       _buildSectionCard('Learning Objective', [
-        const Text('Write a short story with a beginning, problem, and ending.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+        Text('Write a short story with a beginning, problem, and ending.',
+            style: TextStyle(color: _textColor, height: 1.5)),
       ]),
       _buildSectionCard('Explanation', [
-        const Text('Use words like one day, suddenly, finally.',
-            style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+        Text('Use words like one day, suddenly, finally.',
+            style: TextStyle(color: _textColor, height: 1.5)),
       ]),
       _buildSectionCard('Practice', [
         TextField(
@@ -212,7 +242,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             hintText:
                 'Write a short story beginning with: "One morning, I found a bag..."',
             filled: true,
-            fillColor: Colors.white,
+            fillColor: Theme.of(context).colorScheme.surface,
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide.none),
@@ -242,15 +272,14 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             Text(
                 widget.lesson.summary ??
                     'This lesson builds confidence through guided practice and repetition.',
-                style: const TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+                style: TextStyle(color: _textColor, height: 1.5)),
           ]),
           _buildSectionCard('Learning goals', [
-            const Text(
-                'Recognize key vocabulary and phrases relevant to the topic.',
-                style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
-            const Text(
+            Text('Recognize key vocabulary and phrases relevant to the topic.',
+                style: TextStyle(color: _textColor, height: 1.5)),
+            Text(
                 'Answer short questions and complete simple practice activities.',
-                style: TextStyle(color: Color(0xFF1C2A23), height: 1.5)),
+                style: TextStyle(color: _textColor, height: 1.5)),
           ]),
         ];
     }
@@ -258,14 +287,15 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final lessonFocus = widget.lesson.summary ??
         'This lesson builds confidence through guided practice and repetition.';
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F3822),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F3822),
-        foregroundColor: const Color(0xFFFDFBF7),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        foregroundColor: colors.onSurface,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
@@ -283,7 +313,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7F3E9),
+                  color: colors.surface,
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: Column(
@@ -291,8 +321,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   children: [
                     Text(
                       widget.lesson.title,
-                      style: const TextStyle(
-                        color: Color(0xFF1C2A23),
+                      style: TextStyle(
+                        color: colors.onSurface,
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
@@ -309,7 +339,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                     Text(
                       lessonFocus,
                       style: TextStyle(
-                        color: const Color(0xFF1C2A23).withValues(alpha: 0.75),
+                        color: colors.onSurface.withValues(alpha: 0.75),
                         fontSize: 15,
                         height: 1.5,
                       ),
@@ -318,10 +348,10 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Lesson goals',
                 style: TextStyle(
-                  color: Color(0xFFFDFBF7),
+                  color: colors.onSurface,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -339,24 +369,10 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _lessonCompleted = !_lessonCompleted;
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          _lessonCompleted
-                              ? 'Lesson marked as complete.'
-                              : 'Lesson marked as incomplete.',
-                        ),
-                        backgroundColor: const Color(0xFF2D6A4F),
-                      ),
-                    );
-                  },
+                  onPressed: _toggleLessonCompletion,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3E8E55),
-                    foregroundColor: const Color(0xFFFDFBF7),
+                    backgroundColor: colors.primary,
+                    foregroundColor: colors.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -371,13 +387,13 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2D6A4F),
+                    color: colors.surfaceContainer,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Progress: Lesson complete. Great work!',
                     style: TextStyle(
-                        color: Color(0xFFFDFBF7), fontWeight: FontWeight.bold),
+                        color: colors.onSurface, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -396,16 +412,17 @@ class _InfoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF3E8E55).withValues(alpha: 0.12),
+        color: colors.primary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         label,
-        style: const TextStyle(
-          color: Color(0xFF0F3822),
+        style: TextStyle(
+          color: colors.onSurface,
           fontWeight: FontWeight.w600,
           fontSize: 12,
         ),

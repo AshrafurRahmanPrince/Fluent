@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'daily_quiz_screen.dart';
 import 'listening/listening_screen.dart';
@@ -5,25 +6,8 @@ import 'profile_screen.dart';
 import 'reading/reading_screen.dart';
 import 'settings_screen.dart';
 import 'speaking/speaking_screen.dart';
+import '../services/user_progress_service.dart';
 import 'writing/writing_screen.dart';
-
-const Color _forestGreen = Color(0xFF0F3822);
-const Color _warmCream = Color(0xFFF7F3E9);
-const Color _leafGreen = Color(0xFF3E8E55);
-const Color _bannerGreen = Color(0xFF2D6A4F);
-const Color _charcoal = Color(0xFF1C2A23);
-const Color _softWhite = Color(0xFFFDFBF7);
-const double _dailyProgress = 0.65;
-const List<double> _weeklyActivity = [0.48, 0.72, 0.58, 0.9, 0.65, 0.82, 0.35];
-const List<String> _weekdays = [
-  'Mon',
-  'Tue',
-  'Wed',
-  'Thu',
-  'Fri',
-  'Sat',
-  'Sun'
-];
 
 class _DrawerItem {
   final String label;
@@ -42,16 +26,24 @@ const List<_DrawerItem> _drawerOptions = [
 ];
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  final User? user;
+  final Stream<User?>? userChanges;
+
+  const HomeScreen({super.key, this.user, this.userChanges});
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final displayName = user?.displayName?.trim();
+    final greetingName =
+        displayName == null || displayName.isEmpty ? 'User' : displayName;
+
     return Scaffold(
-      backgroundColor: _forestGreen,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       drawer: _buildNavigationDrawer(context),
       appBar: AppBar(
-        backgroundColor: _forestGreen,
-        foregroundColor: _softWhite,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        foregroundColor: colors.onSurface,
         elevation: 0,
         titleSpacing: 16,
         title: Row(
@@ -67,10 +59,10 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               'Fluent',
               style: TextStyle(
-                color: _softWhite,
+                color: colors.onSurface,
                 fontWeight: FontWeight.bold,
                 fontSize: 19,
               ),
@@ -83,10 +75,10 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Good Morning! 👋',
+            Text(
+              'Welcome, $greetingName!',
               style: TextStyle(
-                color: _softWhite,
+                color: colors.onSurface,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
               ),
@@ -95,7 +87,7 @@ class HomeScreen extends StatelessWidget {
             Text(
               'Keep up the great work today!',
               style: TextStyle(
-                color: _softWhite.withValues(alpha: 0.72),
+                color: colors.onSurface.withValues(alpha: 0.72),
                 fontSize: 14,
               ),
             ),
@@ -104,10 +96,10 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 18),
             _buildQuizBanner(context),
             const SizedBox(height: 26),
-            const Text(
+            Text(
               'Core Modules',
               style: TextStyle(
-                color: _softWhite,
+                color: colors.onSurface,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -182,15 +174,16 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildNavigationDrawer(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Drawer(
-      backgroundColor: _warmCream,
+      backgroundColor: colors.surface,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Container(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 22),
-              color: _forestGreen,
+              color: Theme.of(context).scaffoldBackgroundColor,
               child: Row(
                 children: [
                   ClipRRect(
@@ -203,10 +196,10 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Text(
+                  Text(
                     'Fluent',
                     style: TextStyle(
-                      color: _softWhite,
+                      color: colors.onSurface,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -217,18 +210,21 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 8),
             for (final item in _drawerOptions)
               ListTile(
-                leading: Icon(item.icon, color: _leafGreen),
+                leading: Icon(item.icon, color: colors.primary),
                 title: Text(
                   item.label,
-                  style: const TextStyle(
-                    color: _charcoal,
+                  style: TextStyle(
+                    color: colors.onSurface,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 onTap: () {
                   Navigator.pop(context);
                   final screen = switch (item.label) {
-                    'Profile' => const ProfileScreen(),
+                    'Profile' => ProfileScreen(
+                        user: user,
+                        userChanges: userChanges,
+                      ),
                     'Settings' => const SettingsScreen(),
                     _ => null,
                   };
@@ -249,126 +245,13 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildProgressCard() {
-    final int percent = (_dailyProgress * 100).round();
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: _warmCream,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.calendar_month_rounded,
-                  color: _leafGreen, size: 21),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  'Daily Progress',
-                  style: TextStyle(
-                    color: _charcoal,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: _leafGreen.withValues(alpha: 0.13),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '$percent%',
-                  style: const TextStyle(
-                    color: _leafGreen,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 13),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: _dailyProgress,
-              minHeight: 9,
-              backgroundColor: _forestGreen.withValues(alpha: 0.12),
-              valueColor: const AlwaysStoppedAnimation<Color>(_leafGreen),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '$percent% of today\'s goal completed',
-            style: TextStyle(
-              color: _charcoal.withValues(alpha: 0.7),
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 18),
-          const Text(
-            'Weekly Activity',
-            style: TextStyle(
-              color: _charcoal,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 13),
-          SizedBox(
-            height: 112,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: List<Widget>.generate(_weeklyActivity.length, (index) {
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Expanded(
-                          child: Align(
-                            alignment: Alignment.bottomCenter,
-                            child: Container(
-                              width: double.infinity,
-                              height: 72 * _weeklyActivity[index],
-                              decoration: BoxDecoration(
-                                color: index == 3 ? _leafGreen : _bannerGreen,
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 7),
-                        Text(
-                          _weekdays[index],
-                          style: TextStyle(
-                            color: _charcoal.withValues(alpha: 0.67),
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
-            ),
-          ),
-        ],
-      ),
-    );
+    return const _UserProgressCard();
   }
 
   Widget _buildQuizBanner(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Material(
-      color: _bannerGreen,
+      color: colors.surfaceContainer,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
@@ -384,29 +267,29 @@ class HomeScreen extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: _softWhite.withValues(alpha: 0.16),
+                  color: colors.onSurface.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child:
-                    const Icon(Icons.bolt_rounded, color: _softWhite, size: 27),
+                    Icon(Icons.bolt_rounded, color: colors.primary, size: 27),
               ),
               const SizedBox(width: 13),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Daily Quiz',
                       style: TextStyle(
-                        color: _softWhite,
+                        color: colors.onSurface,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 3),
+                    const SizedBox(height: 3),
                     Text(
-                      'Test today\'s vocabulary — 5 mins',
-                      style: TextStyle(color: _softWhite, fontSize: 12),
+                      '10 IELTS questions · 8 mins',
+                      style: TextStyle(color: colors.onSurface, fontSize: 12),
                     ),
                   ],
                 ),
@@ -417,8 +300,7 @@ class HomeScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(builder: (_) => const DailyQuizScreen()),
                 ),
-                icon:
-                    const Icon(Icons.arrow_forward_rounded, color: _softWhite),
+                icon: Icon(Icons.arrow_forward_rounded, color: colors.primary),
               ),
             ],
           ),
@@ -428,34 +310,35 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildStreakBanner(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
       decoration: BoxDecoration(
-        color: _softWhite.withValues(alpha: 0.05),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _leafGreen.withValues(alpha: 0.45)),
+        border: Border.all(color: colors.primary.withValues(alpha: 0.45)),
       ),
       child: Row(
         children: [
           const Text('🔥', style: TextStyle(fontSize: 27)),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   '7 Day Streak!',
                   style: TextStyle(
-                    color: _softWhite,
+                    color: colors.onSurface,
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
                   ),
                 ),
-                SizedBox(height: 3),
+                const SizedBox(height: 3),
                 Text(
                   'You\'re on fire — keep it up!',
-                  style: TextStyle(color: _softWhite, fontSize: 12),
+                  style: TextStyle(color: colors.onSurface, fontSize: 12),
                 ),
               ],
             ),
@@ -466,8 +349,8 @@ class HomeScreen extends StatelessWidget {
               'Your streak history is coming soon.',
             ),
             style: TextButton.styleFrom(
-              foregroundColor: _softWhite,
-              backgroundColor: _leafGreen,
+              foregroundColor: colors.onPrimary,
+              backgroundColor: colors.primary,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -480,15 +363,168 @@ class HomeScreen extends StatelessWidget {
   }
 
   void _showNotice(BuildContext context, String message) {
+    final colors = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: _bannerGreen,
+          backgroundColor: colors.surfaceContainer,
           behavior: SnackBarBehavior.floating,
         ),
       );
+  }
+}
+
+class _UserProgressCard extends StatefulWidget {
+  const _UserProgressCard();
+
+  @override
+  State<_UserProgressCard> createState() => _UserProgressCardState();
+}
+
+class _UserProgressCardState extends State<_UserProgressCard> {
+  final UserProgressService _progressService = UserProgressService.instance;
+  late final Stream<List<DailyActivityProgress>> _progressStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _progressStream = _progressService.watchCurrentWeekProgress();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final zeroWeek = _progressService.emptyCurrentWeek();
+
+    return StreamBuilder<List<DailyActivityProgress>>(
+      stream: _progressStream,
+      initialData: zeroWeek,
+      builder: (context, snapshot) {
+        final week = snapshot.data ?? zeroWeek;
+        final today = week[DateTime.now().weekday - 1];
+        final largestDay = week.fold<int>(
+          0,
+          (largest, day) =>
+              day.totalPoints > largest ? day.totalPoints : largest,
+        );
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.calendar_month_rounded,
+                      color: colors.primary, size: 21),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Daily Progress',
+                      style: TextStyle(
+                        color: colors.onSurface,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '${today.totalPoints} today',
+                    style: TextStyle(
+                      color: colors.primary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Lessons ${today.lessonPoints}  ·  '
+                'Quizzes ${today.quizPoints}  ·  '
+                'Activities ${today.activityPoints}',
+                style: TextStyle(
+                  color: colors.onSurface.withValues(alpha: 0.72),
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'This Week',
+                style: TextStyle(
+                  color: colors.onSurface,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 112,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    for (final day in week)
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 3),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Text(
+                                '${day.totalPoints}',
+                                style: TextStyle(
+                                  color:
+                                      colors.onSurface.withValues(alpha: 0.75),
+                                  fontSize: 10,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Expanded(
+                                child: Align(
+                                  alignment: Alignment.bottomCenter,
+                                  child: Container(
+                                    width: double.infinity,
+                                    height: largestDay == 0
+                                        ? 0
+                                        : 58 * day.totalPoints / largestDay,
+                                    decoration: BoxDecoration(
+                                      color: day.date.weekday ==
+                                              DateTime.now().weekday
+                                          ? colors.primary
+                                          : colors.secondary,
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 7),
+                              Text(
+                                day.weekdayLabel,
+                                style: TextStyle(
+                                  color:
+                                      colors.onSurface.withValues(alpha: 0.67),
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -508,9 +544,10 @@ class ModuleCardImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: _warmCream,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -521,7 +558,7 @@ class ModuleCardImage extends StatelessWidget {
         ],
       ),
       child: Material(
-        color: _warmCream,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -536,7 +573,7 @@ class ModuleCardImage extends StatelessWidget {
                   width: 150,
                   height: 128,
                   decoration: BoxDecoration(
-                    color: _warmCream,
+                    color: colors.surface,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: ClipRRect(
@@ -550,8 +587,8 @@ class ModuleCardImage extends StatelessWidget {
                 const SizedBox(height: 7),
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: _charcoal,
+                  style: TextStyle(
+                    color: colors.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -560,7 +597,7 @@ class ModuleCardImage extends StatelessWidget {
                 Text(
                   lessonCount,
                   style: TextStyle(
-                    color: _charcoal.withValues(alpha: 0.65),
+                    color: colors.onSurface.withValues(alpha: 0.65),
                     fontSize: 12,
                   ),
                 ),

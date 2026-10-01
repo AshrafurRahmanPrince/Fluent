@@ -18,13 +18,14 @@ class ProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final int percentage = (progress * 100).round();
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F3E9),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
@@ -32,8 +33,8 @@ class ProgressCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: Color(0xFF1C2A23),
+            style: TextStyle(
+              color: colors.onSurface,
               fontSize: 17,
               fontWeight: FontWeight.bold,
             ),
@@ -43,8 +44,8 @@ class ProgressCard extends StatelessWidget {
             builder: (context, constraints) {
               final percentageText = Text(
                 '$percentage%',
-                style: const TextStyle(
-                  color: Color(0xFF3E8E55),
+                style: TextStyle(
+                  color: colors.primary,
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                 ),
@@ -52,7 +53,7 @@ class ProgressCard extends StatelessWidget {
               final completedText = Text(
                 '$completedCount of $totalCount $completedLabel completed',
                 style: TextStyle(
-                  color: const Color(0xFF1C2A23).withValues(alpha: 0.68),
+                  color: colors.onSurface.withValues(alpha: 0.68),
                   fontSize: 13,
                 ),
               );
@@ -79,9 +80,8 @@ class ProgressCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 10,
-              backgroundColor: const Color(0xFF0F3822).withValues(alpha: 0.12),
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(Color(0xFF3E8E55)),
+              backgroundColor: colors.onSurface.withValues(alpha: 0.12),
+              valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
             ),
           ),
         ],

@@ -205,13 +205,14 @@ class _ModuleScreenState extends State<ModuleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final progress = _moduleProgress;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F3822),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F3822),
-        foregroundColor: const Color(0xFFFDFBF7),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        foregroundColor: colors.onSurface,
         elevation: 0,
         automaticallyImplyLeading: false,
         leading: IconButton(
@@ -224,11 +225,10 @@ class _ModuleScreenState extends State<ModuleScreen> {
               width: 34,
               height: 34,
               decoration: BoxDecoration(
-                color: const Color(0xFF3E8E55).withValues(alpha: 0.14),
+                color: colors.primary.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child:
-                  Icon(widget.icon, size: 20, color: const Color(0xFF3E8E55)),
+              child: Icon(widget.icon, size: 20, color: colors.primary),
             ),
             const SizedBox(width: 10),
             Text(widget.moduleName),
@@ -243,8 +243,8 @@ class _ModuleScreenState extends State<ModuleScreen> {
             children: [
               Text(
                 widget.subtitle,
-                style: const TextStyle(
-                  color: Color(0xFFFDFBF7),
+                style: TextStyle(
+                  color: colors.onSurface,
                   fontSize: 15,
                 ),
               ),
@@ -259,8 +259,8 @@ class _ModuleScreenState extends State<ModuleScreen> {
               const SizedBox(height: 26),
               Text(
                 '${widget.moduleName} Skills',
-                style: const TextStyle(
-                  color: Color(0xFFFDFBF7),
+                style: TextStyle(
+                  color: colors.onSurface,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -283,8 +283,8 @@ class _ModuleScreenState extends State<ModuleScreen> {
               const SizedBox(height: 28),
               Text(
                 '${widget.moduleName} Lessons',
-                style: const TextStyle(
-                  color: Color(0xFFFDFBF7),
+                style: TextStyle(
+                  color: colors.onSurface,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),

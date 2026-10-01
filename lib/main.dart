@@ -1,57 +1,58 @@
+import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'services/theme_provider.dart';
 import 'screens/splash_screen.dart';
 
-void main() {
-  runApp(const FluentApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  unawaited(ThemeProvider.instance.loadPreference());
+
+  final firebaseInitialization = Completer<bool>();
+  runApp(FluentApp(firebaseInitialization: firebaseInitialization.future));
+
+  try {
+    await Firebase.initializeApp().timeout(const Duration(seconds: 8));
+    debugPrint('Firebase initialized successfully on Android');
+    firebaseInitialization.complete(true);
+  } on Object catch (error, stackTrace) {
+    debugPrint('Firebase initialization failed: $error');
+    debugPrintStack(stackTrace: stackTrace);
+    firebaseInitialization.complete(false);
+  }
 }
 
 class FluentApp extends StatelessWidget {
-  const FluentApp({super.key});
+  final Stream<User?>? authStateChanges;
+  final Future<bool>? firebaseInitialization;
+  final ThemeProvider? themeProvider;
+
+  const FluentApp({
+    super.key,
+    this.authStateChanges,
+    this.firebaseInitialization,
+    this.themeProvider,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Fluent',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF3E8E55),
-          brightness: Brightness.dark,
-        ),
-        scaffoldBackgroundColor: const Color(0xFF0F3822),
-        useMaterial3: true,
-        textTheme: const TextTheme(
-          bodyMedium: TextStyle(
-            color: Color(0xFFFDFBF7),
-            fontFamily: 'sans-serif',
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF3E8E55),
-            foregroundColor: const Color(0xFFFDFBF7),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            textStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: const Color(0xFFFDFBF7),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          labelStyle: const TextStyle(color: Color(0xFF0F3822)),
-          hintStyle: const TextStyle(color: Color(0xFF6B8C7A)),
+    final activeThemeProvider = themeProvider ?? ThemeProvider.instance;
+
+    return AnimatedBuilder(
+      animation: activeThemeProvider,
+      builder: (context, _) => MaterialApp(
+        title: 'Fluent',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeProvider.lightTheme,
+        darkTheme: ThemeProvider.darkTheme,
+        themeMode: activeThemeProvider.themeMode,
+        home: SplashScreen(
+          authStateChanges: authStateChanges,
+          firebaseInitialization: firebaseInitialization,
         ),
       ),
-      home: const SplashScreen(),
     );
   }
 }

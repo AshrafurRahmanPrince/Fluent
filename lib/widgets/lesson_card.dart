@@ -15,11 +15,12 @@ class LessonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final status = statusLabel ?? (lesson.completed ? '✓' : 'Start');
     final isCompleted = status.contains('Completed') || lesson.completed;
 
     return Material(
-      color: const Color(0xFFF7F3E9),
+      color: colors.surface,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
@@ -32,14 +33,14 @@ class LessonCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2D6A4F).withValues(alpha: 0.12),
+                  color: colors.secondary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
                   child: Text(
                     lesson.title.substring(0, 2).toUpperCase(),
-                    style: const TextStyle(
-                      color: Color(0xFF0F3822),
+                    style: TextStyle(
+                      color: colors.onSurface,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -52,8 +53,8 @@ class LessonCard extends StatelessWidget {
                   children: [
                     Text(
                       lesson.title,
-                      style: const TextStyle(
-                        color: Color(0xFF1C2A23),
+                      style: TextStyle(
+                        color: colors.onSurface,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -66,16 +67,14 @@ class LessonCard extends StatelessWidget {
                         Text(
                           lesson.level,
                           style: TextStyle(
-                            color:
-                                const Color(0xFF1C2A23).withValues(alpha: 0.7),
+                            color: colors.onSurface.withValues(alpha: 0.7),
                             fontSize: 12,
                           ),
                         ),
                         Text(
                           '${lesson.duration} min',
                           style: TextStyle(
-                            color:
-                                const Color(0xFF1C2A23).withValues(alpha: 0.7),
+                            color: colors.onSurface.withValues(alpha: 0.7),
                             fontSize: 12,
                           ),
                         ),
@@ -90,16 +89,14 @@ class LessonCard extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: isCompleted
-                      ? const Color(0xFF3E8E55).withValues(alpha: 0.14)
-                      : const Color(0xFF0F3822).withValues(alpha: 0.08),
+                      ? colors.primary.withValues(alpha: 0.14)
+                      : colors.onSurface.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
                   status,
                   style: TextStyle(
-                    color: isCompleted
-                        ? const Color(0xFF3E8E55)
-                        : const Color(0xFF0F3822),
+                    color: isCompleted ? colors.primary : colors.onSurface,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),

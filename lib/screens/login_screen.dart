@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'register_screen.dart';
 import '../widgets/custom_button.dart';
 
@@ -15,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
+  bool _isSubmitting = false;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
@@ -24,21 +25,69 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
-    if (_formKey.currentState!.validate()) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSubmitting = true);
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
       );
+      if (mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    } on FirebaseAuthException catch (exception, stackTrace) {
+      debugPrint('Firebase Auth Error Details: $exception');
+      debugPrintStack(stackTrace: stackTrace);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${_loginErrorMessage(exception)}\n'
+              'Code: ${exception.code}\n'
+              'Details: ${exception.message ?? 'No additional details.'}',
+            ),
+          ),
+        );
+      }
+    } on FirebaseException catch (exception, stackTrace) {
+      debugPrint('Firebase Auth Error Details: $exception');
+      debugPrintStack(stackTrace: stackTrace);
+      _showLoginError(
+        '${_firebaseUnavailableMessage(exception)}\n'
+        'Code: ${exception.code}\nDetails: ${exception.message ?? exception}',
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Firebase Auth Error Details: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      _showLoginError('Unable to sign in right now. Details: $error');
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  void _showLoginError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  String _firebaseUnavailableMessage(FirebaseException exception) {
+    if (exception.code == 'core/no-app') {
+      return 'Firebase is not configured for this Android app.';
+    }
+    return 'Firebase is unavailable. Check your connection and try again.';
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final screenHeight = MediaQuery.sizeOf(context).height;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F3822),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -55,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF3E8E55).withValues(alpha: 0.35),
+                        color: colors.primary.withValues(alpha: 0.35),
                         blurRadius: 20,
                         spreadRadius: 4,
                       ),
@@ -70,19 +119,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 28),
-                const Text(
+                Text(
                   'Welcome Back!',
                   style: TextStyle(
-                    color: Color(0xFFFDFBF7),
+                    color: colors.onSurface,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'Continue your language journey',
                   style: TextStyle(
-                    color: Color(0xFF3E8E55),
+                    color: colors.primary,
                     fontSize: 14,
                   ),
                 ),
@@ -90,18 +139,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  style: const TextStyle(color: Color(0xFF0F3822)),
-                  decoration: const InputDecoration(
+                  style: TextStyle(color: colors.onSurface),
+                  decoration: InputDecoration(
                     labelText: 'Email Address',
                     hintText: 'you@example.com',
                     prefixIcon:
-                        Icon(Icons.email_outlined, color: Color(0xFF3E8E55)),
+                        Icon(Icons.email_outlined, color: colors.primary),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter your email';
                     }
-                    if (!value.contains('@')) {
+                    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                        .hasMatch(value.trim())) {
                       return 'Enter a valid email address';
                     }
                     return null;
@@ -111,18 +161,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  style: const TextStyle(color: Color(0xFF0F3822)),
+                  style: TextStyle(color: colors.onSurface),
                   decoration: InputDecoration(
                     labelText: 'Password',
                     hintText: '••••••••',
-                    prefixIcon: const Icon(Icons.lock_outline,
-                        color: Color(0xFF3E8E55)),
+                    prefixIcon: Icon(Icons.lock_outline, color: colors.primary),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
-                        color: const Color(0xFF3E8E55),
+                        color: colors.primary,
                       ),
                       onPressed: () =>
                           setState(() => _obscurePassword = !_obscurePassword),
@@ -132,9 +181,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your password';
                     }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
                     return null;
                   },
                 ),
@@ -142,10 +188,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {},
-                    child: const Text(
+                    child: Text(
                       'Forgot Password?',
                       style: TextStyle(
-                        color: Color(0xFF3E8E55),
+                        color: colors.primary,
                         fontSize: 13,
                       ),
                     ),
@@ -155,25 +201,27 @@ class _LoginScreenState extends State<LoginScreen> {
                 CustomButton(
                   label: 'Log In',
                   onPressed: _handleLogin,
+                  isLoading: _isSubmitting,
                 ),
                 const SizedBox(height: 24),
                 Row(
                   children: [
                     Expanded(
                       child: Divider(
-                        color: const Color(0xFF3E8E55).withValues(alpha: 0.4),
+                        color: colors.primary.withValues(alpha: 0.4),
                       ),
                     ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Text(
                         'or',
-                        style: TextStyle(color: Color(0xFF6B8C7A)),
+                        style: TextStyle(
+                            color: colors.onSurface.withValues(alpha: 0.7)),
                       ),
                     ),
                     Expanded(
                       child: Divider(
-                        color: const Color(0xFF3E8E55).withValues(alpha: 0.4),
+                        color: colors.primary.withValues(alpha: 0.4),
                       ),
                     ),
                   ],
@@ -183,9 +231,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   alignment: WrapAlignment.center,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       "Don't have an account? ",
-                      style: TextStyle(color: Color(0xFF6B8C7A)),
+                      style: TextStyle(
+                          color: colors.onSurface.withValues(alpha: 0.7)),
                     ),
                     GestureDetector(
                       onTap: () => Navigator.push(
@@ -193,10 +242,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         MaterialPageRoute(
                             builder: (_) => const RegisterScreen()),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Sign Up',
                         style: TextStyle(
-                          color: Color(0xFFFDFBF7),
+                          color: colors.onSurface,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -209,5 +258,28 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  String _loginErrorMessage(FirebaseAuthException exception) {
+    switch (exception.code) {
+      case 'invalid-email':
+        return 'Enter a valid email address.';
+      case 'user-not-found':
+        return 'No user found with this email.';
+      case 'wrong-password':
+        return 'Incorrect password.';
+      case 'invalid-credential':
+        return 'Email or password is incorrect.';
+      case 'operation-not-allowed':
+        return 'Email/Password provider is disabled in Firebase Console.';
+      case 'user-disabled':
+        return 'This account has been disabled. Contact support for help.';
+      case 'too-many-requests':
+        return 'Too many sign-in attempts. Please try again later.';
+      case 'network-request-failed':
+        return 'Check your internet connection and try again.';
+      default:
+        return 'Unable to sign in. Please try again.';
+    }
   }
 }

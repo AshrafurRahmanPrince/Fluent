@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/custom_button.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -18,6 +18,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
+  bool _isSubmitting = false;
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
@@ -30,32 +31,71 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _handleSignUp() {
-    if (_formKey.currentState!.validate()) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-        (route) => false,
+  Future<void> _handleSignUp() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSubmitting = true);
+    try {
+      final credential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
       );
+      final user = credential.user!;
+      await user.updateDisplayName(_nameController.text.trim());
+      await user.reload();
+      if (mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    } on FirebaseAuthException catch (exception, stackTrace) {
+      debugPrint('Firebase Auth Error Details: $exception');
+      debugPrintStack(stackTrace: stackTrace);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${_registrationErrorMessage(exception)}\n'
+              'Code: ${exception.code}\n'
+              'Details: ${exception.message ?? 'No additional details.'}',
+            ),
+          ),
+        );
+      }
+    } on FirebaseException catch (exception, stackTrace) {
+      debugPrint('Firebase Auth Error Details: $exception');
+      debugPrintStack(stackTrace: stackTrace);
+      _showRegistrationError(
+        '${_firebaseUnavailableMessage(exception)}\n'
+        'Code: ${exception.code}\nDetails: ${exception.message ?? exception}',
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Firebase Auth Error Details: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      _showRegistrationError(
+        'Unable to create your account right now. Details: $error',
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFF0F3822),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F3822),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new,
-              color: Color(0xFFFDFBF7), size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+          color: colors.onSurface,
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Create Account',
           style: TextStyle(
-            color: Color(0xFFFDFBF7),
+            color: colors.onSurface,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -69,18 +109,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Start your journey 🌱',
                 style: TextStyle(
-                  color: Color(0xFFFDFBF7),
+                  color: colors.onSurface,
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Create a free Fluent account today.',
-                style: TextStyle(color: Color(0xFF6B8C7A), fontSize: 14),
+                style: TextStyle(
+                    color: colors.onSurface.withValues(alpha: 0.7),
+                    fontSize: 14),
               ),
               const SizedBox(height: 32),
               _buildSectionLabel('Full Name'),
@@ -88,11 +130,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextFormField(
                 controller: _nameController,
                 textCapitalization: TextCapitalization.words,
-                style: const TextStyle(color: Color(0xFF0F3822)),
-                decoration: const InputDecoration(
-                  hintText: 'Jane Doe',
-                  prefixIcon:
-                      Icon(Icons.person_outline, color: Color(0xFF3E8E55)),
+                style: TextStyle(color: colors.onSurface),
+                decoration: InputDecoration(
+                  hintText: '',
+                  prefixIcon: Icon(Icons.person_outline, color: colors.primary),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -107,17 +148,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                style: const TextStyle(color: Color(0xFF0F3822)),
-                decoration: const InputDecoration(
+                style: TextStyle(color: colors.onSurface),
+                decoration: InputDecoration(
                   hintText: 'you@example.com',
-                  prefixIcon:
-                      Icon(Icons.email_outlined, color: Color(0xFF3E8E55)),
+                  prefixIcon: Icon(Icons.email_outlined, color: colors.primary),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Please enter your email';
                   }
-                  if (!value.contains('@')) {
+                  if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                      .hasMatch(value.trim())) {
                     return 'Enter a valid email address';
                   }
                   return null;
@@ -129,17 +170,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextFormField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
-                style: const TextStyle(color: Color(0xFF0F3822)),
+                style: TextStyle(color: colors.onSurface),
                 decoration: InputDecoration(
                   hintText: '••••••••',
-                  prefixIcon:
-                      const Icon(Icons.lock_outline, color: Color(0xFF3E8E55)),
+                  prefixIcon: Icon(Icons.lock_outline, color: colors.primary),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword
                           ? Icons.visibility_outlined
                           : Icons.visibility_off_outlined,
-                      color: const Color(0xFF3E8E55),
+                      color: colors.primary,
                     ),
                     onPressed: () =>
                         setState(() => _obscurePassword = !_obscurePassword),
@@ -161,17 +201,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextFormField(
                 controller: _confirmPasswordController,
                 obscureText: _obscureConfirm,
-                style: const TextStyle(color: Color(0xFF0F3822)),
+                style: TextStyle(color: colors.onSurface),
                 decoration: InputDecoration(
                   hintText: '••••••••',
-                  prefixIcon:
-                      const Icon(Icons.lock_outline, color: Color(0xFF3E8E55)),
+                  prefixIcon: Icon(Icons.lock_outline, color: colors.primary),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscureConfirm
                           ? Icons.visibility_outlined
                           : Icons.visibility_off_outlined,
-                      color: const Color(0xFF3E8E55),
+                      color: colors.primary,
                     ),
                     onPressed: () =>
                         setState(() => _obscureConfirm = !_obscureConfirm),
@@ -191,6 +230,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               CustomButton(
                 label: 'Create Account',
                 onPressed: _handleSignUp,
+                isLoading: _isSubmitting,
               ),
               const SizedBox(height: 24),
               Center(
@@ -198,9 +238,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   'By signing up you agree to our Terms & Privacy Policy.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: const Color(0xFFFDFBF7).withValues(alpha: 0.5),
+                    color: colors.onSurface.withValues(alpha: 0.5),
                     fontSize: 12,
                   ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Center(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Already have an account? Log In'),
                 ),
               ),
               const SizedBox(height: 24),
@@ -212,14 +259,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildSectionLabel(String text) {
+    final colors = Theme.of(context).colorScheme;
     return Text(
       text,
-      style: const TextStyle(
-        color: Color(0xFFFDFBF7),
+      style: TextStyle(
+        color: colors.onSurface,
         fontSize: 13,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.5,
       ),
     );
+  }
+
+  String _registrationErrorMessage(FirebaseAuthException exception) {
+    switch (exception.code) {
+      case 'email-already-in-use':
+        return 'An account already exists for that email.';
+      case 'invalid-email':
+        return 'Enter a valid email address.';
+      case 'weak-password':
+        return 'Choose a stronger password with at least 6 characters.';
+      case 'operation-not-allowed':
+        return 'Email/Password provider is disabled in Firebase Console.';
+      case 'user-disabled':
+        return 'This account has been disabled. Contact support for help.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please try again later.';
+      case 'network-request-failed':
+        return 'Check your internet connection and try again.';
+      default:
+        return 'Unable to create your account. Please try again.';
+    }
+  }
+
+  void _showRegistrationError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  String _firebaseUnavailableMessage(FirebaseException exception) {
+    if (exception.code == 'core/no-app') {
+      return 'Firebase is not configured for this Android app.';
+    }
+    return 'Firebase is unavailable. Check your connection and try again.';
   }
 }
